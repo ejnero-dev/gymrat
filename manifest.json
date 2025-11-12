@@ -1,0 +1,43 @@
+{
+  "name": "GymFlow - Tu Entrenamiento Personal",
+  "short_name": "GymFlow",
+  "description": "Tracking de entrenamientos de gimnasio con tu rutina de 5 días",
+  "start_url": "/gymrat/",
+  "display": "standalone",
+  "background_color": "#6366f1",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "scope": "/gymrat/",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["health", "fitness", "lifestyle", "sports"],
+  "shortcuts": [
+    {
+      "name": "Comenzar Entreno",
+      "short_name": "Entrenar",
+      "description": "Empezar tu entrenamiento de hoy",
+      "url": "/",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/workout.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "label": "Vista de entrenamiento"
+    }
+  ]
+}

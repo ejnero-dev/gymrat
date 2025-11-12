@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GymFlow - Generador de Iconos</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 500px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            color: #1f2937;
+        }
+        
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 32px;
+        }
+        
+        canvas {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            margin: 20px 0;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .btn {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin: 8px;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            background: #5558e3;
+            transform: translateY(-2px);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .instructions {
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 24px;
+            text-align: left;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .instructions ol {
+            margin-left: 20px;
+        }
+        
+        .instructions li {
+            margin: 8px 0;
+        }
+        
+        .success {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 16px;
+            display: none;
+        }
+        
+        .success.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏋️ GymFlow</h1>
+        <p class="subtitle">Generador de Iconos para PWA</p>
+        
+        <canvas id="canvas192" width="192" height="192"></canvas>
+        <button class="btn" onclick="downloadIcon(192)">⬇️ Descargar icon-192.png</button>
+        
+        <canvas id="canvas512" width="512" height="512"></canvas>
+        <button class="btn" onclick="downloadIcon(512)">⬇️ Descargar icon-512.png</button>
+        
+        <div class="success" id="success">✅ Icono descargado correctamente</div>
+        
+        <div class="instructions">
+            <strong>📝 Instrucciones:</strong>
+            <ol>
+                <li>Haz clic en ambos botones para descargar los 2 iconos</li>
+                <li>Crea una carpeta llamada <code>icons/</code> en tu proyecto</li>
+                <li>Mueve los archivos descargados a esa carpeta</li>
+                <li>¡Listo! Tus iconos están listos para la PWA</li>
+            </ol>
+        </div>
+    </div>
+    
+    <script>
+        // Generar iconos al cargar la página
+        window.addEventListener('load', () => {
+            generateIcon(192);
+            generateIcon(512);
+        });
+        
+        function generateIcon(size) {
+            const canvas = document.getElementById(`canvas${size}`);
+            const ctx = canvas.getContext('2d');
+            
+            // Background color (color principal de GymFlow)
+            ctx.fillStyle = '#6366f1';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Emoji 💪 (si el navegador lo soporta)
+            const fontSize = size * 0.55;
+            ctx.font = `${fontSize}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Intentar renderizar emoji
+            ctx.fillText('💪', size / 2, size / 2);
+            
+            // Si el emoji no se renderizó bien, usar texto "GF"
+            const imageData = ctx.getImageData(0, 0, size, size);
+            const hasContent = imageData.data.some((pixel, i) => {
+                // Verificar si hay píxeles que no sean del color de fondo
+                if (i % 4 === 3) return false; // Skip alpha channel
+                return pixel !== 99 && pixel !== 102 && pixel !== 241;
+            });
+            
+            if (!hasContent) {
+                // Fallback: usar texto "GF"
+                ctx.fillStyle = '#6366f1';
+                ctx.fillRect(0, 0, size, size);
+                
+                ctx.fillStyle = 'white';
+                ctx.font = `bold ${size * 0.4}px Arial`;
+                ctx.fillText('GF', size / 2, size / 2);
+            }
+            
+            // Añadir borde redondeado (opcional, comentado por defecto)
+            // roundedCorners(ctx, size);
+        }
+        
+        function roundedCorners(ctx, size) {
+            // Crear máscara con esquinas redondeadas
+            const radius = size * 0.2; // 20% border radius
+            ctx.globalCompositeOperation = 'destination-in';
+            ctx.beginPath();
+            ctx.moveTo(radius, 0);
+            ctx.lineTo(size - radius, 0);
+            ctx.quadraticCurveTo(size, 0, size, radius);
+            ctx.lineTo(size, size - radius);
+            ctx.quadraticCurveTo(size, size, size - radius, size);
+            ctx.lineTo(radius, size);
+            ctx.quadraticCurveTo(0, size, 0, size - radius);
+            ctx.lineTo(0, radius);
+            ctx.quadraticCurveTo(0, 0, radius, 0);
+            ctx.closePath();
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+        }
+        
+        function downloadIcon(size) {
+            const canvas = document.getElementById(`canvas${size}`);
+            const link = document.createElement('a');
+            link.download = `icon-${size}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            
+            // Mostrar mensaje de éxito
+            const success = document.getElementById('success');
+            success.classList.add('show');
+            setTimeout(() => {
+                success.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

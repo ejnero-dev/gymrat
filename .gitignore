@@ -1,0 +1,25 @@
+# Carpeta de referencia
+behavioral-activation/
+
+# Archivos de extracción
+files.zip
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+*.Zone.Identifier
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporales
+*.tmp
+*.bak
+*.log
+
+# No ignorar los iconos cuando estén listos
+# (por defecto se suben todos los PNG)
