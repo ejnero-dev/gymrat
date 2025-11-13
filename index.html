@@ -683,6 +683,60 @@
             cursor: pointer;
         }
 
+        /* Backup Section */
+        .backup-section {
+            margin-top: 32px;
+            padding: 20px;
+            background: var(--gray-50);
+            border-radius: 12px;
+            border: 2px dashed var(--gray-300);
+        }
+
+        .backup-section h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--gray-700);
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .backup-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .backup-btn {
+            padding: 14px;
+            background: white;
+            border: 2px solid var(--gray-300);
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .backup-btn:hover {
+            border-color: var(--primary);
+            background: var(--gray-50);
+        }
+
+        .backup-btn:active {
+            transform: scale(0.98);
+        }
+
+        .backup-btn.export {
+            color: var(--success);
+            border-color: var(--success);
+        }
+
+        .backup-btn.import {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
         /* Hidden class */
         .hidden {
             display: none !important;
@@ -733,6 +787,15 @@
             <p class="workout-subtitle" id="workoutSubtitle">4 ejercicios • 16 series totales</p>
             <div class="exercise-list" id="exerciseList"></div>
             <button class="finish-workout-btn" onclick="finishWorkout()">✓ Terminar Entrenamiento</button>
+
+            <!-- Backup Section -->
+            <div class="backup-section">
+                <h3>💾 Backup de Datos</h3>
+                <div class="backup-buttons">
+                    <button class="backup-btn export" onclick="exportBackup()">📥 Exportar</button>
+                    <button class="backup-btn import" onclick="importBackup()">📤 Importar</button>
+                </div>
+            </div>
         </div>
 
         <!-- Exercise Detail View -->
@@ -751,18 +814,7 @@
                 <a class="video-link" id="videoLink" href="#" target="_blank">📺 Ver Técnica en YouTube</a>
             </div>
 
-            <!-- Last Workout -->
-            <div class="last-workout" id="lastWorkout">
-                <h3>📊 Última vez:</h3>
-                <div class="last-workout-data" id="lastWorkoutData">20kg × 12 reps (hace 3 días)</div>
-            </div>
-
-            <!-- Exercise Notes -->
-            <div class="exercise-notes" id="exerciseNotes">
-                <!-- Populated dynamically by renderExerciseNote() -->
-            </div>
-
-            <!-- Current Set -->
+            <!-- Current Set (LO MÁS IMPORTANTE - PRIMERO) -->
             <div class="current-set">
                 <div class="set-number" id="setNumber">SERIE 1 de 4</div>
                 <div class="set-inputs">
@@ -791,6 +843,17 @@
             <div class="completed-sets" id="completedSets">
                 <h3>Series Completadas</h3>
                 <div id="completedSetsList"></div>
+            </div>
+
+            <!-- Last Workout -->
+            <div class="last-workout" id="lastWorkout">
+                <h3>📊 Última vez:</h3>
+                <div class="last-workout-data" id="lastWorkoutData">20kg × 12 reps (hace 3 días)</div>
+            </div>
+
+            <!-- Exercise Notes -->
+            <div class="exercise-notes" id="exerciseNotes">
+                <!-- Populated dynamically by renderExerciseNote() -->
             </div>
 
             <!-- Tips -->
@@ -1470,7 +1533,7 @@
                 .filter(date => date !== todayKey)
                 .sort()
                 .reverse();
-            
+
             for (const date of sortedDates) {
                 const workout = workoutData[date];
                 if (workout.exercises[exerciseId] && workout.exercises[exerciseId].sets.length > 0) {
@@ -1480,12 +1543,91 @@
                     };
                 }
             }
-            
+
             return null;
         }
 
         // ============================================
-        // 10. INIT APP
+        // 11. BACKUP / RESTORE
+        // ============================================
+
+        function exportBackup() {
+            const data = {
+                workoutData: workoutData,
+                exerciseNotes: exerciseNotes,
+                exportDate: new Date().toISOString(),
+                version: '1.0'
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `gymflow-backup-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            alert('✅ Backup exportado correctamente a tu carpeta de Descargas');
+        }
+
+        function importBackup() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const data = JSON.parse(event.target.result);
+
+                        // Validate data structure
+                        if (!data.workoutData && !data.exerciseNotes) {
+                            alert('❌ Archivo de backup no válido');
+                            return;
+                        }
+
+                        // Confirm before overwriting
+                        const confirm = window.confirm(
+                            '⚠️ ¿Estás seguro de importar este backup?\n\n' +
+                            'Esto SOBRESCRIBIRÁ todos tus datos actuales.\n\n' +
+                            'Si tienes datos importantes, exporta un backup primero.'
+                        );
+
+                        if (!confirm) return;
+
+                        // Import data
+                        if (data.workoutData) {
+                            workoutData = data.workoutData;
+                            localStorage.setItem('gymflow-data', JSON.stringify(workoutData));
+                        }
+
+                        if (data.exerciseNotes) {
+                            exerciseNotes = data.exerciseNotes;
+                            localStorage.setItem('gymflow-exercise-notes', JSON.stringify(exerciseNotes));
+                        }
+
+                        alert('✅ Backup importado correctamente. La página se recargará.');
+
+                        // Reload page to reflect changes
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+
+                    } catch (error) {
+                        console.error('Error importing backup:', error);
+                        alert('❌ Error al importar el backup. Verifica que el archivo sea válido.');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        // ============================================
+        // 12. INIT APP
         // ============================================
 
         init();
