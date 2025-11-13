@@ -454,6 +454,96 @@
             color: var(--gray-900);
         }
 
+        /* Exercise Notes */
+        .exercise-notes {
+            margin-bottom: 24px;
+        }
+
+        .exercise-note-box {
+            background: #e0f2fe;
+            border: 2px solid #0284c7;
+            border-radius: 12px;
+            padding: 16px;
+            position: relative;
+        }
+
+        .exercise-note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .exercise-note-header h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin: 0;
+        }
+
+        .exercise-note-edit-btn {
+            background: transparent;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px 8px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .exercise-note-edit-btn:hover {
+            opacity: 1;
+        }
+
+        .exercise-note-text {
+            font-size: 14px;
+            color: var(--gray-900);
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .exercise-note-textarea {
+            width: 100%;
+            min-height: 80px;
+            max-height: 200px;
+            padding: 12px;
+            border: 2px solid #0284c7;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            line-height: 1.5;
+            resize: vertical;
+            background: white;
+        }
+
+        .exercise-note-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .exercise-note-add-btn {
+            width: 100%;
+            padding: 12px;
+            background: white;
+            border: 2px dashed #0284c7;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #0284c7;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .exercise-note-add-btn:hover {
+            background: #e0f2fe;
+        }
+
+        .exercise-note-add-btn:active {
+            transform: scale(0.98);
+        }
+
         /* Tips */
         .tips {
             background: var(--gray-50);
@@ -665,6 +755,11 @@
                 <div class="last-workout-data" id="lastWorkoutData">20kg × 12 reps (hace 3 días)</div>
             </div>
 
+            <!-- Exercise Notes -->
+            <div class="exercise-notes" id="exerciseNotes">
+                <!-- Populated dynamically by renderExerciseNote() -->
+            </div>
+
             <!-- Current Set -->
             <div class="current-set">
                 <div class="set-number" id="setNumber">SERIE 1 de 4</div>
@@ -686,7 +781,7 @@
                     <div class="timer-bar">
                         <div class="timer-bar-fill" id="timerBarFill"></div>
                     </div>
-                    <div class="timer-label">â±ï¸ Tiempo de descanso</div>
+                    <div class="timer-label">⏱️ Tiempo de descanso</div>
                 </div>
             </div>
 
@@ -741,39 +836,39 @@
                 name: 'DÍA 1 - PECHO',
                 emoji: '💪',
                 exercises: [
-                    { 
-                        id: 'e1', 
-                        name: 'Contractor de Pecho', 
-                        sets: 4, 
-                        reps: 12, 
-                        rest: 90,
+                    {
+                        id: 'e1',
+                        name: 'Contractor de Pecho',
+                        sets: 4,
+                        reps: 12,
+                        rest: 60,
                         video: 'https://www.youtube.com/results?search_query=contractor+pecho+gym',
                         tips: 'Mantén los codos ligeramente flexionados y controla el movimiento.'
                     },
-                    { 
-                        id: 'e2', 
-                        name: 'Press de Banca con Mancuernas', 
-                        sets: 4, 
-                        reps: 12, 
-                        rest: 90,
+                    {
+                        id: 'e2',
+                        name: 'Press de Banca con Mancuernas',
+                        sets: 4,
+                        reps: 12,
+                        rest: 60,
                         video: 'https://www.youtube.com/results?search_query=press+banca+mancuernas',
                         tips: 'Mantén los pies firmes en el suelo y la espalda pegada al banco.'
                     },
-                    { 
-                        id: 'e3', 
-                        name: 'Apertura en Banco Inclinado', 
-                        sets: 4, 
-                        reps: 12, 
-                        rest: 90,
+                    {
+                        id: 'e3',
+                        name: 'Apertura en Banco Inclinado',
+                        sets: 4,
+                        reps: 12,
+                        rest: 60,
                         video: 'https://www.youtube.com/results?search_query=apertura+banco+inclinado',
                         tips: 'No bajes demasiado para evitar lesiones en el hombro.'
                     },
-                    { 
-                        id: 'e4', 
-                        name: 'Pullover', 
-                        sets: 4, 
-                        reps: 12, 
-                        rest: 90,
+                    {
+                        id: 'e4',
+                        name: 'Pullover',
+                        sets: 4,
+                        reps: 12,
+                        rest: 60,
                         video: 'https://www.youtube.com/results?search_query=pullover+gym',
                         tips: 'Estira bien el pecho en la fase excéntrica.'
                     }
@@ -796,20 +891,20 @@
                 name: 'DÍA 3 - ESPALDA',
                 emoji: '💪',
                 exercises: [
-                    { id: 'e12', name: 'Jalón al Pecho Agarre Ancho', sets: 4, reps: 12, rest: 90, warmup: true, video: 'https://www.youtube.com/results?search_query=jalón+pecho+agarre+ancho', tips: 'Primera serie es calentamiento. Tira con los codos, no con las manos.' },
-                    { id: 'e13', name: 'Remo Bajo en Polea', sets: 3, reps: 12, rest: 90, video: 'https://www.youtube.com/results?search_query=remo+bajo+polea', tips: 'Mantén la espalda recta y aprieta las escápulas al final.' },
-                    { id: 'e14', name: 'Remo en Banco con Mancuernas', sets: 3, reps: 12, rest: 90, video: 'https://www.youtube.com/results?search_query=remo+banco+mancuernas', tips: 'El codo debe subir más alto que la espalda.' },
-                    { id: 'e15', name: 'Pullover en Polea', sets: 3, reps: 12, rest: 90, video: 'https://www.youtube.com/results?search_query=pullover+polea+espalda', tips: 'Mantén los brazos ligeramente flexionados.' }
+                    { id: 'e12', name: 'Jalón al Pecho Agarre Ancho', sets: 4, reps: 12, rest: 60, warmup: true, video: 'https://www.youtube.com/results?search_query=jalón+pecho+agarre+ancho', tips: 'Primera serie es calentamiento. Tira con los codos, no con las manos.' },
+                    { id: 'e13', name: 'Remo Bajo en Polea', sets: 3, reps: 12, rest: 60, video: 'https://www.youtube.com/results?search_query=remo+bajo+polea', tips: 'Mantén la espalda recta y aprieta las escápulas al final.' },
+                    { id: 'e14', name: 'Remo en Banco con Mancuernas', sets: 3, reps: 12, rest: 60, video: 'https://www.youtube.com/results?search_query=remo+banco+mancuernas', tips: 'El codo debe subir más alto que la espalda.' },
+                    { id: 'e15', name: 'Pullover en Polea', sets: 3, reps: 12, rest: 60, video: 'https://www.youtube.com/results?search_query=pullover+polea+espalda', tips: 'Mantén los brazos ligeramente flexionados.' }
                 ]
             },
             day4: {
                 name: 'DÍA 4 - BÍCEPS Y HOMBRO',
                 emoji: '💪',
                 exercises: [
-                    { id: 'e16', name: 'La Vuelta al Mundo', sets: 4, reps: 12, rest: 90, video: 'https://www.youtube.com/results?search_query=vuelta+al+mundo+hombros', tips: 'Movimiento circular completo y controlado.' },
+                    { id: 'e16', name: 'La Vuelta al Mundo', sets: 4, reps: 12, rest: 60, video: 'https://www.youtube.com/results?search_query=vuelta+al+mundo+hombros', tips: 'Movimiento circular completo y controlado.' },
                     { id: 'e17', name: 'Elevaciones Laterales', sets: 3, reps: 15, rest: 60, video: 'https://www.youtube.com/results?search_query=elevaciones+laterales', tips: 'No subas más arriba de los hombros.' },
                     { id: 'e18', name: 'Elevaciones Frontales', sets: 3, reps: 12, rest: 60, video: 'https://www.youtube.com/results?search_query=elevaciones+frontales', tips: 'Mantén el core activado para evitar balanceo.' },
-                    { id: 'e19', name: 'Press de Hombro en Máquina', sets: 3, reps: 12, rest: 90, video: 'https://www.youtube.com/results?search_query=press+hombro+máquina', tips: 'Empuja hacia arriba sin bloquear los codos.' },
+                    { id: 'e19', name: 'Press de Hombro en Máquina', sets: 3, reps: 12, rest: 60, video: 'https://www.youtube.com/results?search_query=press+hombro+máquina', tips: 'Empuja hacia arriba sin bloquear los codos.' },
                     { id: 'e20', name: 'Pájaro Máquina Peck Deck', sets: 3, reps: 12, rest: 60, video: 'https://www.youtube.com/results?search_query=pájaro+máquina', tips: 'Aprieta las escápulas al final del movimiento.' },
                     { id: 'e21', name: 'Jalón al Mentón', sets: 3, reps: 12, rest: 60, video: 'https://www.youtube.com/results?search_query=jalón+mentón', tips: 'Los codos deben ir más altos que las manos.' }
                 ]
@@ -863,6 +958,7 @@
             updateCurrentDate();
             renderDaySelector();
             loadWorkoutView();
+            loadExerciseNotes();
         }
 
         function updateCurrentDate() {
@@ -987,17 +1083,7 @@
             document.getElementById('setNumber').textContent = 
                 `SERIE ${currentSetNumber} de ${exercise.sets}`;
             
-            // Set default values
-            if (exerciseData.sets.length > 0) {
-                const lastSet = exerciseData.sets[exerciseData.sets.length - 1];
-                document.getElementById('weightInput').value = lastSet.weight;
-                document.getElementById('repsInput').value = lastSet.reps;
-            } else {
-                document.getElementById('weightInput').value = '';
-                document.getElementById('repsInput').value = exercise.reps;
-            }
-            
-            // Show last workout
+            // Show last workout reference
             const lastWorkoutEl = document.getElementById('lastWorkout');
             const lastWorkoutData = getLastWorkoutForExercise(exerciseId);
             if (lastWorkoutData) {
@@ -1010,7 +1096,25 @@
             } else {
                 lastWorkoutEl.classList.add('hidden');
             }
-            
+
+            // Auto-fill weight and reps inputs
+            if (exerciseData.sets.length > 0) {
+                // Use last set from TODAY
+                const lastSet = exerciseData.sets[exerciseData.sets.length - 1];
+                document.getElementById('weightInput').value = lastSet.weight;
+                document.getElementById('repsInput').value = lastSet.reps;
+            } else if (lastWorkoutData) {
+                // Use average from LAST WORKOUT
+                const avgWeight = Math.round(lastWorkoutData.sets.reduce((sum, s) => sum + s.weight, 0) / lastWorkoutData.sets.length);
+                const avgReps = Math.round(lastWorkoutData.sets.reduce((sum, s) => sum + s.reps, 0) / lastWorkoutData.sets.length);
+                document.getElementById('weightInput').value = avgWeight;
+                document.getElementById('repsInput').value = avgReps;
+            } else {
+                // No previous data - use defaults
+                document.getElementById('weightInput').value = '';
+                document.getElementById('repsInput').value = exercise.reps;
+            }
+
             // Render completed sets
             renderCompletedSets(exerciseData.sets);
             
@@ -1026,6 +1130,9 @@
             if (!workoutStartTime) {
                 workoutStartTime = Date.now();
             }
+
+            // Render exercise note
+            renderExerciseNote(exerciseId);
         }
 
         function renderCompletedSets(sets) {
@@ -1218,7 +1325,136 @@
         }
 
         // ============================================
-        // 9. UTILITY FUNCTIONS
+        // 9. EXERCISE NOTES
+        // ============================================
+
+        let exerciseNotes = {};
+        let saveNoteTimeout = null;
+
+        // Load exercise notes from localStorage
+        function loadExerciseNotes() {
+            const saved = localStorage.getItem('gymflow-exercise-notes');
+            if (saved) {
+                try {
+                    exerciseNotes = JSON.parse(saved);
+                } catch (e) {
+                    console.error('Error loading exercise notes:', e);
+                    exerciseNotes = {};
+                }
+            }
+        }
+
+        // Save exercise notes to localStorage
+        function saveExerciseNotes() {
+            localStorage.setItem('gymflow-exercise-notes', JSON.stringify(exerciseNotes));
+            console.log('📝 Exercise notes saved');
+        }
+
+        // Render exercise note section
+        function renderExerciseNote(exerciseId) {
+            const container = document.getElementById('exerciseNotes');
+            const note = exerciseNotes[exerciseId] || '';
+            const hasNote = note.trim().length > 0;
+
+            if (hasNote) {
+                // Show existing note with edit button
+                container.innerHTML = `
+                    <div class="exercise-note-box">
+                        <div class="exercise-note-header">
+                            <h3>📝 Mis Notas</h3>
+                            <button class="exercise-note-edit-btn" onclick="toggleEditNote('${exerciseId}')">✏️ Editar</button>
+                        </div>
+                        <div class="exercise-note-text" id="noteText-${exerciseId}">${note}</div>
+                        <textarea
+                            class="exercise-note-textarea hidden"
+                            id="noteTextarea-${exerciseId}"
+                            placeholder="Ej: Sentí buena activación | Próxima semana 25kg | Ajuste 3 funciona mejor"
+                            maxlength="500"
+                            oninput="onNoteInput('${exerciseId}')"
+                        >${note}</textarea>
+                    </div>
+                `;
+            } else {
+                // Show add note button
+                container.innerHTML = `
+                    <button class="exercise-note-add-btn" onclick="showNoteEditor('${exerciseId}')">
+                        + Añadir nota
+                    </button>
+                `;
+            }
+        }
+
+        // Toggle edit mode for note
+        function toggleEditNote(exerciseId) {
+            const textDiv = document.getElementById(`noteText-${exerciseId}`);
+            const textarea = document.getElementById(`noteTextarea-${exerciseId}`);
+            const editBtn = event.target;
+
+            if (textarea.classList.contains('hidden')) {
+                // Enter edit mode
+                textDiv.classList.add('hidden');
+                textarea.classList.remove('hidden');
+                textarea.focus();
+                editBtn.textContent = '✓ Guardar';
+            } else {
+                // Exit edit mode
+                textDiv.classList.remove('hidden');
+                textarea.classList.add('hidden');
+                editBtn.textContent = '✏️ Editar';
+
+                // Update displayed text
+                textDiv.textContent = textarea.value;
+            }
+        }
+
+        // Show note editor for new note
+        function showNoteEditor(exerciseId) {
+            const container = document.getElementById('exerciseNotes');
+            container.innerHTML = `
+                <div class="exercise-note-box">
+                    <div class="exercise-note-header">
+                        <h3>📝 Mis Notas</h3>
+                    </div>
+                    <textarea
+                        class="exercise-note-textarea"
+                        id="noteTextarea-${exerciseId}"
+                        placeholder="Ej: Sentí buena activación | Próxima semana 25kg | Ajuste 3 funciona mejor"
+                        maxlength="500"
+                        oninput="onNoteInput('${exerciseId}')"
+                        autofocus
+                    ></textarea>
+                </div>
+            `;
+
+            // Focus textarea
+            setTimeout(() => {
+                document.getElementById(`noteTextarea-${exerciseId}`).focus();
+            }, 100);
+        }
+
+        // Handle note input with debounced save
+        function onNoteInput(exerciseId) {
+            const textarea = document.getElementById(`noteTextarea-${exerciseId}`);
+            const noteText = textarea.value.trim();
+
+            // Clear existing timeout
+            if (saveNoteTimeout) {
+                clearTimeout(saveNoteTimeout);
+            }
+
+            // Save after 500ms of no typing
+            saveNoteTimeout = setTimeout(() => {
+                if (noteText.length > 0) {
+                    exerciseNotes[exerciseId] = noteText;
+                } else {
+                    delete exerciseNotes[exerciseId];
+                }
+                saveExerciseNotes();
+            }, 500);
+        }
+
+        // ============================================
+        // 10. UTILITY FUNCTIONS
         // ============================================
 
         function getTodayKey() {
