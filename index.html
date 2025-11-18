@@ -15,7 +15,10 @@
     
     <!-- Manifest -->
     <link rel="manifest" href="manifest.json">
-    
+
+    <!-- Twitter Embed SDK -->
+    <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
     <style>
         * {
             margin: 0;
@@ -260,6 +263,18 @@
             margin-bottom: 12px;
         }
 
+        .video-embed-container {
+            width: 100%;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--gray-200);
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         .video-link {
             display: inline-block;
             padding: 10px 20px;
@@ -269,6 +284,10 @@
             border-radius: 8px;
             font-weight: 600;
             font-size: 14px;
+        }
+
+        .video-link.twitter {
+            background: #1DA1F2;
         }
 
         /* Current Set */
@@ -993,9 +1012,8 @@
             </div>
 
             <!-- Video Section -->
-            <div class="video-section">
-                <div class="placeholder">🎥</div>
-                <a class="video-link" id="videoLink" href="#" target="_blank">📺 Ver Técnica en YouTube</a>
+            <div class="video-section" id="videoSection">
+                <!-- Populated dynamically by renderVideoSection() -->
             </div>
 
             <!-- Current Set (LO MÁS IMPORTANTE - PRIMERO) -->
@@ -1146,7 +1164,7 @@
                 name: 'DÍA 2 - PIERNAS',
                 emoji: '🦵',
                 exercises: [
-                    { id: 'e5', name: 'Extensión de Piernas', sets: 5, reps: 12, rest: 90, warmup: true, video: 'https://www.youtube.com/results?search_query=extension+piernas+gym', tips: 'Primera serie es calentamiento con peso ligero.' },
+                    { id: 'e5', name: 'Extensión de Piernas', sets: 5, reps: 12, rest: 90, warmup: true, video: 'https://x.com/DSecretsOfLife/status/1972513225175437469', tips: 'Primera serie es calentamiento con peso ligero.' },
                     { id: 'e6', name: 'Prensa', sets: 4, reps: 12, rest: 90, video: 'https://www.youtube.com/results?search_query=prensa+piernas', tips: 'No bloquees las rodillas completamente en la extensión.' },
                     { id: 'e7', name: 'Sentadillas', sets: 4, reps: 12, rest: 90, video: 'https://www.youtube.com/results?search_query=sentadillas+técnica', tips: 'Baja hasta que los muslos estén paralelos al suelo.' },
                     { id: 'e8', name: 'Hip Thrust', sets: 4, reps: 12, rest: 90, video: 'https://www.youtube.com/results?search_query=hip+thrust', tips: 'Aprieta los glúteos en la parte superior del movimiento.' },
@@ -1344,12 +1362,14 @@
             
             // Update UI
             document.getElementById('exerciseName').textContent = exercise.name;
-            document.getElementById('exerciseProgress').textContent = 
+            document.getElementById('exerciseProgress').textContent =
                 `Ejercicio ${index + 1} de ${dayData.exercises.length}`;
-            document.getElementById('videoLink').href = exercise.video;
             document.getElementById('exerciseTips').textContent = exercise.tips;
-            document.getElementById('setNumber').textContent = 
+            document.getElementById('setNumber').textContent =
                 `SERIE ${currentSetNumber} de ${exercise.sets}`;
+
+            // Render video section
+            renderVideoSection(exercise.video);
             
             // Show last workout reference
             const lastWorkoutEl = document.getElementById('lastWorkout');
@@ -1422,6 +1442,96 @@
             html += '<button class="delete-last-set-btn" onclick="deleteLastSet()">🗑️ Borrar última serie</button>';
 
             container.innerHTML = html;
+        }
+
+        function renderVideoSection(videoUrl) {
+            const container = document.getElementById('videoSection');
+
+            // Detect video type
+            const isTwitter = videoUrl.includes('twitter.com') || videoUrl.includes('x.com');
+            const isYouTube = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
+
+            if (isTwitter) {
+                // Extract tweet ID from URL
+                const tweetId = extractTweetId(videoUrl);
+                if (tweetId) {
+                    container.innerHTML = `
+                        <div class="video-embed-container" id="twitterEmbed-${tweetId}">
+                            <div style="color: var(--gray-600); font-size: 14px;">Cargando video...</div>
+                        </div>
+                        <a class="video-link twitter" href="${videoUrl}" target="_blank">🐦 Ver en X/Twitter</a>
+                    `;
+
+                    // Load Twitter embed
+                    loadTwitterEmbed(tweetId);
+                } else {
+                    // Fallback if can't extract ID
+                    container.innerHTML = `
+                        <div class="placeholder">🎥</div>
+                        <a class="video-link twitter" href="${videoUrl}" target="_blank">🐦 Ver en X/Twitter</a>
+                    `;
+                }
+            } else if (isYouTube) {
+                // YouTube - show link (can be upgraded to iframe embed later)
+                container.innerHTML = `
+                    <div class="placeholder">🎥</div>
+                    <a class="video-link" href="${videoUrl}" target="_blank">📺 Ver Técnica en YouTube</a>
+                `;
+            } else {
+                // Generic video link
+                container.innerHTML = `
+                    <div class="placeholder">🎥</div>
+                    <a class="video-link" href="${videoUrl}" target="_blank">🎥 Ver Video de Técnica</a>
+                `;
+            }
+        }
+
+        function extractTweetId(url) {
+            // Extract tweet ID from various Twitter/X URL formats
+            const patterns = [
+                /status\/(\d+)/,           // https://twitter.com/user/status/123456
+                /\/(\d+)(?:\?|$)/,         // https://x.com/user/status/123456?s=20
+            ];
+
+            for (const pattern of patterns) {
+                const match = url.match(pattern);
+                if (match && match[1]) {
+                    return match[1];
+                }
+            }
+
+            return null;
+        }
+
+        function loadTwitterEmbed(tweetId) {
+            // Wait for Twitter SDK to load
+            if (typeof twttr === 'undefined') {
+                setTimeout(() => loadTwitterEmbed(tweetId), 500);
+                return;
+            }
+
+            const container = document.getElementById(`twitterEmbed-${tweetId}`);
+            if (!container) return;
+
+            // Clear loading message
+            container.innerHTML = '';
+
+            // Create tweet embed
+            twttr.widgets.createTweet(
+                tweetId,
+                container,
+                {
+                    theme: 'light',
+                    cards: 'visible',
+                    conversation: 'none',
+                    align: 'center',
+                    width: 550
+                }
+            ).then((el) => {
+                if (!el) {
+                    container.innerHTML = '<div style="color: var(--danger); font-size: 14px;">Error al cargar el video</div>';
+                }
+            });
         }
 
         function deleteLastSet() {
