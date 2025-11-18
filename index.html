@@ -905,6 +905,27 @@
             transform: scale(0.98);
         }
 
+        /* Timer Flash Overlay */
+        @keyframes timerFlash {
+            0% { opacity: 0; }
+            25% { opacity: 0.8; }
+            50% { opacity: 0; }
+            75% { opacity: 0.8; }
+            100% { opacity: 0; }
+        }
+
+        .timer-flash-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            z-index: 9999;
+            pointer-events: none;
+            animation: timerFlash 1s ease-in-out;
+        }
+
         /* Mobile adjustments */
         @media (max-width: 480px) {
             body {
@@ -1541,9 +1562,44 @@ function startRestTimer(seconds) {
                     stopRestTimer();
                     restTimerInline.classList.remove('active');
 
-                    // Vibration
-                    if ('vibrate' in navigator) {
-                        navigator.vibrate([200, 100, 200]);
+                    // Improved Vibration (more distinctive pattern)
+                    try {
+                        if ('vibrate' in navigator) {
+                            navigator.vibrate([400, 200, 400, 200, 600]);
+                        }
+                    } catch (e) {
+                        console.warn('Vibration failed:', e);
+                    }
+
+                    // Visual Flash (essential for iOS - no vibration support)
+                    try {
+                        const flash = document.createElement('div');
+                        flash.className = 'timer-flash-overlay';
+                        document.body.appendChild(flash);
+                        setTimeout(() => flash.remove(), 1000);
+                    } catch (e) {
+                        console.warn('Visual flash failed:', e);
+                    }
+
+                    // Audio Beep (800 Hz tone for 0.5s)
+                    try {
+                        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        oscillator.frequency.value = 800;
+                        oscillator.type = 'sine';
+                        
+                        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                        
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + 0.5);
+                    } catch (e) {
+                        console.warn('Audio beep failed:', e);
                     }
 
                     // Notification
@@ -1554,6 +1610,7 @@ function startRestTimer(seconds) {
                         });
                     }
                 }
+
             }
 
             updateTimer();
