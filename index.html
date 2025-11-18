@@ -1510,47 +1510,55 @@
         // 7. REST TIMER
         // ============================================
 
-        function startRestTimer(seconds) {
+function startRestTimer(seconds) {
             stopRestTimer(); // Clear any existing timer
-            
-            let remaining = seconds;
+
             const timerDisplay = document.getElementById('timerDisplay');
             const timerBarFill = document.getElementById('timerBarFill');
             const restTimerInline = document.getElementById('restTimerInline');
-            
+
             restTimerInline.classList.add('active');
-            
+
+            // Use timestamps instead of counter for background-safe timing
+            const startTime = Date.now();
+            const endTime = startTime + (seconds * 1000);
+            const totalDuration = seconds * 1000;
+
             function updateTimer() {
+                const now = Date.now();
+                const remainingMs = Math.max(0, endTime - now);
+                const remaining = Math.ceil(remainingMs / 1000);
+
                 const mins = Math.floor(remaining / 60);
                 const secs = remaining % 60;
                 timerDisplay.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-                
-                const percentage = ((seconds - remaining) / seconds) * 100;
+
+                const elapsed = now - startTime;
+                const percentage = Math.min(100, (elapsed / totalDuration) * 100);
                 timerBarFill.style.width = percentage + '%';
-                
-                if (remaining <= 0) {
+
+                if (remainingMs <= 0) {
                     stopRestTimer();
                     restTimerInline.classList.remove('active');
-                    
+
                     // Vibration
                     if ('vibrate' in navigator) {
                         navigator.vibrate([200, 100, 200]);
                     }
-                    
+
                     // Notification
                     if ('Notification' in window && Notification.permission === 'granted') {
-                        new Notification('â° Descanso terminado', {
+                        new Notification('⏰ Descanso terminado', {
                             body: '¡Listo para la siguiente serie!',
-                            icon: '/icons/icon-192.png'
+                            icon: '/gymrat/icons/icon-192.png'
                         });
                     }
-                } else {
-                    remaining--;
                 }
             }
-            
+
             updateTimer();
             timerInterval = setInterval(updateTimer, 1000);
+        }
         }
 
         function stopRestTimer() {
