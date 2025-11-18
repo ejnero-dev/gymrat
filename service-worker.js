@@ -1,7 +1,7 @@
 // GymFlow Service Worker
-// Version: 2.2.0
+// Version: 3.0.0
 
-const CACHE_NAME = 'gymflow-v4';
+const CACHE_NAME = 'gymflow-v5';
 const urlsToCache = [
   '/gymrat/',
   '/gymrat/index.html',

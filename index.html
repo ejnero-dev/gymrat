@@ -742,6 +742,169 @@
             display: none !important;
         }
 
+        /* Modal Overlay */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-container {
+            background: white;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .modal-header h3 {
+            font-size: 20px;
+            font-weight: 800;
+            margin: 0;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 2px solid var(--gray-200);
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Rest Time Config */
+        .rest-config-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: var(--gray-50);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border: 2px solid var(--gray-200);
+        }
+
+        .rest-config-label {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .rest-config-input {
+            width: 100px;
+            padding: 10px;
+            border: 2px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            text-align: center;
+            background: white;
+        }
+
+        .rest-config-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .rest-config-btn {
+            width: 100%;
+            padding: 12px;
+            background: white;
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 16px;
+        }
+
+        .rest-config-btn:hover {
+            background: var(--gray-50);
+        }
+
+        .rest-config-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Modal Buttons */
+        .modal-btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .modal-btn.cancel {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .modal-btn.cancel:active {
+            background: var(--gray-300);
+        }
+
+        .modal-btn.primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .modal-btn.primary:active {
+            transform: scale(0.98);
+        }
+
+        /* Delete Last Set Button */
+        .delete-last-set-btn {
+            width: 100%;
+            padding: 12px;
+            background: white;
+            border: 2px solid var(--danger);
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--danger);
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 12px;
+        }
+
+        .delete-last-set-btn:hover {
+            background: #fee;
+        }
+
+        .delete-last-set-btn:active {
+            transform: scale(0.98);
+        }
+
         /* Mobile adjustments */
         @media (max-width: 480px) {
             body {
@@ -828,7 +991,10 @@
                     </div>
                 </div>
                 <button class="complete-set-btn" onclick="completeSet()">✓ Completar Serie</button>
-                
+
+                <!-- Rest Time Config Button -->
+                <button class="rest-config-btn" onclick="showRestTimeConfig()">⚙️ Cambiar tiempo de reposo</button>
+
                 <!-- Rest Timer Inline -->
                 <div class="rest-timer-inline" id="restTimerInline">
                     <div class="timer-display" id="timerDisplay">01:30</div>
@@ -890,6 +1056,22 @@
 
     <!-- Floating Timer -->
     <div class="floating-timer" id="floatingTimer" onclick="skipRest()">90</div>
+
+    <!-- Rest Time Configuration Modal -->
+    <div class="modal-overlay" id="restTimeModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3>⚙️ Configurar Tiempos de Descanso</h3>
+            </div>
+            <div class="modal-body" id="restTimeModalBody">
+                <!-- Dynamic content will be inserted here -->
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn cancel" onclick="closeRestTimeModal()">Cancelar</button>
+                <button class="modal-btn primary" onclick="saveRestTimeConfig()">Guardar</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // ============================================
@@ -1206,14 +1388,58 @@
                 container.innerHTML = '<p style="color: var(--gray-600); font-size: 14px;">No hay series completadas aún</p>';
                 return;
             }
-            
-            container.innerHTML = sets.map((set, index) => `
+
+            let html = sets.map((set, index) => `
                 <div class="completed-set">
                     <span class="set-label">Serie ${index + 1}</span>
                     <span class="set-data">${set.weight}kg × ${set.reps} reps</span>
                     <span class="set-time">${new Date(set.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
             `).join('');
+
+            // Add delete last set button
+            html += '<button class="delete-last-set-btn" onclick="deleteLastSet()">🗑️ Borrar última serie</button>';
+
+            container.innerHTML = html;
+        }
+
+        function deleteLastSet() {
+            // Show confirmation dialog
+            if (!confirm('¿Seguro que quieres borrar la última serie?')) {
+                return;
+            }
+
+            const todayKey = getTodayKey();
+            const exerciseData = workoutData[todayKey]?.exercises[currentExerciseId];
+
+            if (!exerciseData || exerciseData.sets.length === 0) {
+                alert('⚠️ No hay series para borrar');
+                return;
+            }
+
+            // Remove last set
+            exerciseData.sets.pop();
+
+            // Decrement current set number
+            currentSetNumber = exerciseData.sets.length + 1;
+
+            // Save changes
+            autoSave();
+
+            // Stop rest timer if active
+            stopRestTimer();
+
+            // Update UI
+            const dayData = ROUTINE[currentDay];
+            const exercise = dayData.exercises.find(ex => ex.id === currentExerciseId);
+            document.getElementById('setNumber').textContent =
+                `SERIE ${currentSetNumber} de ${exercise.sets}`;
+            renderCompletedSets(exerciseData.sets);
+
+            // If all sets were deleted, refresh workout view
+            if (exerciseData.sets.length === 0) {
+                loadWorkoutView();
+            }
         }
 
         function completeSet() {
@@ -1252,12 +1478,15 @@
             
             if (currentSetNumber <= exercise.sets) {
                 // More sets remaining
-                document.getElementById('setNumber').textContent = 
+                document.getElementById('setNumber').textContent =
                     `SERIE ${currentSetNumber} de ${exercise.sets}`;
                 renderCompletedSets(exerciseData.sets);
-                
-                // Start rest timer
-                startRestTimer(exercise.rest);
+
+                // Start rest timer with custom rest time if available
+                const customRestTimes = exerciseData.customRestTimes || [];
+                const previousSetIndex = currentSetNumber - 2; // The set we just completed (0-indexed)
+                const restTime = customRestTimes[previousSetIndex] || exercise.rest;
+                startRestTimer(restTime);
             } else {
                 // Exercise completed
                 renderCompletedSets(exerciseData.sets);
@@ -1339,6 +1568,91 @@
         // Request notification permission
         if ('Notification' in window && Notification.permission === 'default') {
             Notification.requestPermission();
+        }
+
+        // ============================================
+        // 7.5. CUSTOM REST TIME CONFIGURATION
+        // ============================================
+
+        function showRestTimeConfig() {
+            const dayData = ROUTINE[currentDay];
+            const exercise = dayData.exercises.find(ex => ex.id === currentExerciseId);
+
+            if (!exercise) return;
+
+            const todayKey = getTodayKey();
+            const todayData = workoutData[todayKey] || { day: currentDay, exercises: {} };
+            const exerciseData = todayData.exercises[currentExerciseId] || { sets: [] };
+
+            // Get existing custom rest times or use default
+            const customRestTimes = exerciseData.customRestTimes || [];
+
+            // Determine default rest time based on exercise
+            const defaultRest = exercise.rest;
+
+            // Generate modal content
+            let modalContent = '<p style="margin-bottom: 16px; color: var(--gray-600); font-size: 14px;">Configura el tiempo de descanso para cada serie (en segundos).</p>';
+
+            for (let i = 0; i < exercise.sets; i++) {
+                const restTime = customRestTimes[i] || defaultRest;
+                modalContent += `
+                    <div class="rest-config-item">
+                        <span class="rest-config-label">Serie ${i + 1}</span>
+                        <input
+                            type="number"
+                            class="rest-config-input"
+                            id="restTime-${i}"
+                            value="${restTime}"
+                            min="0"
+                            max="600"
+                            step="5"
+                        />
+                        <span style="margin-left: 8px; color: var(--gray-600); font-size: 14px;">seg</span>
+                    </div>
+                `;
+            }
+
+            document.getElementById('restTimeModalBody').innerHTML = modalContent;
+            document.getElementById('restTimeModal').classList.add('active');
+        }
+
+        function closeRestTimeModal() {
+            document.getElementById('restTimeModal').classList.remove('active');
+        }
+
+        function saveRestTimeConfig() {
+            const dayData = ROUTINE[currentDay];
+            const exercise = dayData.exercises.find(ex => ex.id === currentExerciseId);
+
+            if (!exercise) return;
+
+            const todayKey = getTodayKey();
+
+            // Initialize data structure if needed
+            if (!workoutData[todayKey]) {
+                workoutData[todayKey] = { day: currentDay, exercises: {}, date: todayKey };
+            }
+            if (!workoutData[todayKey].exercises[currentExerciseId]) {
+                workoutData[todayKey].exercises[currentExerciseId] = { sets: [] };
+            }
+
+            // Collect custom rest times
+            const customRestTimes = [];
+            for (let i = 0; i < exercise.sets; i++) {
+                const input = document.getElementById(`restTime-${i}`);
+                const restTime = parseInt(input.value) || exercise.rest;
+                customRestTimes.push(restTime);
+            }
+
+            // Save to workout data
+            workoutData[todayKey].exercises[currentExerciseId].customRestTimes = customRestTimes;
+            autoSave();
+
+            // Close modal
+            closeRestTimeModal();
+
+            // Show confirmation
+            alert('✅ Tiempos de descanso configurados correctamente');
         }
 
         // ============================================
