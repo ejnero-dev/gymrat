@@ -28,7 +28,7 @@
       "name": "Comenzar Entreno",
       "short_name": "Entrenar",
       "description": "Empezar tu entrenamiento de hoy",
-      "url": "/",
+      "url": "/gymrat/",
       "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
     }
   ],
