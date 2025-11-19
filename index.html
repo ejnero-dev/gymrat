@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>💪 GymFlow - Tu Entrenamiento Personal</title>
-    
+
     <!-- PWA Meta Tags -->
     <meta name="description" content="Tracking de entrenamientos de gimnasio - Tu rutina de 5 días">
     <meta name="theme-color" content="#6366f1">
@@ -12,7 +13,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="GymFlow">
-    
+
     <!-- Manifest -->
     <link rel="manifest" href="manifest.json">
 
@@ -45,7 +46,8 @@
             background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             min-height: 100vh;
             padding: 16px;
-            padding-bottom: 100px; /* Space for timer */
+            padding-bottom: 100px;
+            /* Space for timer */
         }
 
         .container {
@@ -53,7 +55,7 @@
             margin: 0 auto;
             background: white;
             border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
             overflow: hidden;
         }
 
@@ -926,11 +928,25 @@
 
         /* Timer Flash Overlay */
         @keyframes timerFlash {
-            0% { opacity: 0; }
-            25% { opacity: 0.8; }
-            50% { opacity: 0; }
-            75% { opacity: 0.8; }
-            100% { opacity: 0; }
+            0% {
+                opacity: 0;
+            }
+
+            25% {
+                opacity: 0.8;
+            }
+
+            50% {
+                opacity: 0;
+            }
+
+            75% {
+                opacity: 0.8;
+            }
+
+            100% {
+                opacity: 0;
+            }
         }
 
         .timer-flash-overlay {
@@ -973,6 +989,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <!-- Header -->
@@ -1022,11 +1039,13 @@
                 <div class="set-inputs">
                     <div class="input-group">
                         <label class="input-label">Peso (kg)</label>
-                        <input type="number" class="set-input" id="weightInput" placeholder="0" min="0" step="0.5" inputmode="decimal">
+                        <input type="number" class="set-input" id="weightInput" placeholder="0" min="0" step="0.5"
+                            inputmode="decimal">
                     </div>
                     <div class="input-group">
                         <label class="input-label">Reps</label>
-                        <input type="number" class="set-input" id="repsInput" placeholder="12" min="1" inputmode="numeric">
+                        <input type="number" class="set-input" id="repsInput" placeholder="12" min="1"
+                            inputmode="numeric">
                     </div>
                 </div>
                 <button class="complete-set-btn" onclick="completeSet()">✓ Completar Serie</button>
@@ -1073,7 +1092,7 @@
             <div class="summary-icon">🎉</div>
             <h2 class="summary-title">¡Entrenamiento Completado!</h2>
             <p class="summary-subtitle" id="summaryDay">DÍA 1 - PECHO</p>
-            
+
             <div class="summary-stats">
                 <div class="summary-stat">
                     <div class="summary-stat-label">Volumen Total</div>
@@ -1232,7 +1251,6 @@
         // Auto-save (como behavioral-activation)
         function autoSave() {
             localStorage.setItem('gymflow-data', JSON.stringify(workoutData));
-            console.log('✅ Auto-saved');
         }
 
         // ============================================
@@ -1262,7 +1280,7 @@
         function renderDaySelector() {
             const container = document.getElementById('daySelector');
             const days = ['day1', 'day2', 'day3', 'day4', 'day5'];
-            
+
             container.innerHTML = days.map(day => {
                 const dayData = ROUTINE[day];
                 const dayNum = day.replace('day', '');
@@ -1292,29 +1310,29 @@
             const dayData = ROUTINE[currentDay];
             const todayKey = getTodayKey();
             const todayData = workoutData[todayKey] || { day: currentDay, exercises: {} };
-            
+
             document.getElementById('workoutTitle').textContent = dayData.name;
-            
+
             const totalSets = dayData.exercises.reduce((sum, ex) => sum + ex.sets, 0);
-            document.getElementById('workoutSubtitle').textContent = 
+            document.getElementById('workoutSubtitle').textContent =
                 `${dayData.exercises.length} ejercicios • ${totalSets} series totales`;
-            
+
             const exerciseListHtml = dayData.exercises.map((exercise, index) => {
                 const exerciseData = todayData.exercises[exercise.id] || { sets: [] };
                 const completedSets = exerciseData.sets.length;
                 const isCompleted = completedSets >= exercise.sets;
                 const isActive = currentExerciseId === exercise.id;
-                
+
                 let status = '⚪';
                 if (isCompleted) status = '✅';
                 else if (isActive) status = '▶️';
-                
+
                 let lastWorkout = '';
                 if (completedSets > 0) {
                     const lastSet = exerciseData.sets[completedSets - 1];
                     lastWorkout = `<div class="exercise-last">Última: ${lastSet.weight}kg × ${lastSet.reps} reps</div>`;
                 }
-                
+
                 return `
                     <div class="exercise-item ${isCompleted ? 'completed' : ''} ${isActive ? 'active' : ''}" 
                          onclick="startExercise('${exercise.id}', ${index})">
@@ -1330,9 +1348,9 @@
                     </div>
                 `;
             }).join('');
-            
+
             document.getElementById('exerciseList').innerHTML = exerciseListHtml;
-            
+
             // Show/hide views
             document.getElementById('workoutView').classList.remove('hidden');
             document.getElementById('exerciseView').classList.add('hidden');
@@ -1346,20 +1364,20 @@
         function startExercise(exerciseId, index) {
             currentExerciseId = exerciseId;
             currentExerciseIndex = index;
-            
+
             const dayData = ROUTINE[currentDay];
             const exercise = dayData.exercises.find(ex => ex.id === exerciseId);
             const todayKey = getTodayKey();
             const todayData = workoutData[todayKey] || { day: currentDay, exercises: {} };
             const exerciseData = todayData.exercises[exerciseId] || { sets: [] };
-            
+
             currentSetNumber = exerciseData.sets.length + 1;
-            
+
             if (currentSetNumber > exercise.sets) {
                 // Exercise already completed, but allow viewing
                 currentSetNumber = exercise.sets;
             }
-            
+
             // Update UI
             document.getElementById('exerciseName').textContent = exercise.name;
             document.getElementById('exerciseProgress').textContent =
@@ -1370,7 +1388,7 @@
 
             // Render video section
             renderVideoSection(exercise.video);
-            
+
             // Show last workout reference
             const lastWorkoutEl = document.getElementById('lastWorkout');
             const lastWorkoutData = getLastWorkoutForExercise(exerciseId);
@@ -1379,7 +1397,7 @@
                 const daysAgo = Math.floor((Date.now() - new Date(lastWorkoutData.date).getTime()) / (1000 * 60 * 60 * 24));
                 const avgWeight = Math.round(lastWorkoutData.sets.reduce((sum, s) => sum + s.weight, 0) / lastWorkoutData.sets.length);
                 const avgReps = Math.round(lastWorkoutData.sets.reduce((sum, s) => sum + s.reps, 0) / lastWorkoutData.sets.length);
-                document.getElementById('lastWorkoutData').textContent = 
+                document.getElementById('lastWorkoutData').textContent =
                     `${avgWeight}kg × ${avgReps} reps (hace ${daysAgo} días)`;
             } else {
                 lastWorkoutEl.classList.add('hidden');
@@ -1405,15 +1423,15 @@
 
             // Render completed sets
             renderCompletedSets(exerciseData.sets);
-            
+
             // Show/hide views
             document.getElementById('workoutView').classList.add('hidden');
             document.getElementById('exerciseView').classList.remove('hidden');
             document.getElementById('exerciseView').classList.add('active');
-            
+
             // Hide rest timer
             document.getElementById('restTimerInline').classList.remove('active');
-            
+
             // Start workout timer if first exercise
             if (!workoutStartTime) {
                 workoutStartTime = Date.now();
@@ -1576,16 +1594,16 @@
         function completeSet() {
             const weight = parseFloat(document.getElementById('weightInput').value);
             const reps = parseInt(document.getElementById('repsInput').value);
-            
+
             if (!weight || weight <= 0 || !reps || reps <= 0) {
                 alert('⚠️ Por favor ingresa peso y reps válidos');
                 return;
             }
-            
+
             const dayData = ROUTINE[currentDay];
             const exercise = dayData.exercises.find(ex => ex.id === currentExerciseId);
             const todayKey = getTodayKey();
-            
+
             // Initialize data structure if needed
             if (!workoutData[todayKey]) {
                 workoutData[todayKey] = { day: currentDay, exercises: {}, date: todayKey };
@@ -1593,20 +1611,20 @@
             if (!workoutData[todayKey].exercises[currentExerciseId]) {
                 workoutData[todayKey].exercises[currentExerciseId] = { sets: [] };
             }
-            
+
             // Add set
             workoutData[todayKey].exercises[currentExerciseId].sets.push({
                 weight,
                 reps,
                 timestamp: new Date().toISOString()
             });
-            
+
             autoSave();
-            
+
             // Update UI
             currentSetNumber++;
             const exerciseData = workoutData[todayKey].exercises[currentExerciseId];
-            
+
             if (currentSetNumber <= exercise.sets) {
                 // More sets remaining
                 document.getElementById('setNumber').textContent =
@@ -1621,7 +1639,7 @@
             } else {
                 // Exercise completed
                 renderCompletedSets(exerciseData.sets);
-                
+
                 // Show completion message
                 setTimeout(() => {
                     alert('✅ ¡Ejercicio completado!');
@@ -1641,7 +1659,7 @@
         // 7. REST TIMER
         // ============================================
 
-function startRestTimer(seconds) {
+        function startRestTimer(seconds) {
             stopRestTimer(); // Clear any existing timer
 
             const timerDisplay = document.getElementById('timerDisplay');
@@ -1696,16 +1714,16 @@ function startRestTimer(seconds) {
                         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                         const oscillator = audioContext.createOscillator();
                         const gainNode = audioContext.createGain();
-                        
+
                         oscillator.connect(gainNode);
                         gainNode.connect(audioContext.destination);
-                        
+
                         oscillator.frequency.value = 800;
                         oscillator.type = 'sine';
-                        
+
                         gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
                         gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-                        
+
                         oscillator.start(audioContext.currentTime);
                         oscillator.stop(audioContext.currentTime + 0.5);
                     } catch (e) {
@@ -1726,7 +1744,7 @@ function startRestTimer(seconds) {
             updateTimer();
             timerInterval = setInterval(updateTimer, 1000);
         }
-        }
+
 
         function stopRestTimer() {
             if (timerInterval) {
@@ -1837,38 +1855,38 @@ function startRestTimer(seconds) {
         function finishWorkout() {
             const todayKey = getTodayKey();
             const todayData = workoutData[todayKey];
-            
+
             if (!todayData || Object.keys(todayData.exercises).length === 0) {
                 alert('⚠️ No has completado ningún ejercicio aún');
                 return;
             }
-            
+
             // Calculate stats
             let totalVolume = 0;
             let totalSets = 0;
-            
+
             Object.values(todayData.exercises).forEach(exerciseData => {
                 exerciseData.sets.forEach(set => {
                     totalVolume += set.weight * set.reps;
                     totalSets++;
                 });
             });
-            
-            const durationMinutes = workoutStartTime ? 
+
+            const durationMinutes = workoutStartTime ?
                 Math.round((Date.now() - workoutStartTime) / (1000 * 60)) : 0;
-            
+
             // Update UI
             const dayData = ROUTINE[currentDay];
             document.getElementById('summaryDay').textContent = dayData.name;
             document.getElementById('summaryVolume').textContent = totalVolume.toLocaleString('es-ES') + ' kg';
             document.getElementById('summarySets').textContent = totalSets + ' series';
             document.getElementById('summaryDuration').textContent = durationMinutes + ' min';
-            
+
             // Show summary view
             document.getElementById('workoutView').classList.add('hidden');
             document.getElementById('exerciseView').classList.remove('active');
             document.getElementById('summaryView').classList.add('active');
-            
+
             // Reset workout start time
             workoutStartTime = null;
         }
@@ -1901,7 +1919,6 @@ function startRestTimer(seconds) {
         // Save exercise notes to localStorage
         function saveExerciseNotes() {
             localStorage.setItem('gymflow-exercise-notes', JSON.stringify(exerciseNotes));
-            console.log('📝 Exercise notes saved');
         }
 
         // Render exercise note section
@@ -2147,4 +2164,5 @@ function startRestTimer(seconds) {
         }
     </script>
 </body>
+
 </html>

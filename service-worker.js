@@ -1,7 +1,7 @@
 // GymFlow Service Worker
-// Version: 2.5.0
+// Version: 2.6.0
 
-const CACHE_NAME = 'gymflow-v7';
+const CACHE_NAME = 'gymflow-v8';
 const urlsToCache = [
   '/gymrat/',
   '/gymrat/index.html',
@@ -11,7 +11,7 @@ const urlsToCache = [
 // Install Event - Cache assets
 self.addEventListener('install', (event) => {
   console.log('[Service Worker] Instalando...');
-  
+
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
@@ -31,7 +31,7 @@ self.addEventListener('install', (event) => {
 // Activate Event - Clean old caches
 self.addEventListener('activate', (event) => {
   console.log('[Service Worker] Activando...');
-  
+
   event.waitUntil(
     caches.keys()
       .then((cacheNames) => {
@@ -61,7 +61,7 @@ self.addEventListener('fetch', (event) => {
           console.log('[Service Worker] Sirviendo desde cache:', event.request.url);
           return response;
         }
-        
+
         // Si no está en cache, hacer fetch de red
         console.log('[Service Worker] Fetching desde red:', event.request.url);
         return fetch(event.request)
@@ -70,21 +70,21 @@ self.addEventListener('fetch', (event) => {
             if (!response || response.status !== 200 || response.type !== 'basic') {
               return response;
             }
-            
+
             // Clonar respuesta (solo se puede leer una vez)
             const responseToCache = response.clone();
-            
+
             // Guardar en cache para siguiente vez
             caches.open(CACHE_NAME)
               .then((cache) => {
                 cache.put(event.request, responseToCache);
               });
-            
+
             return response;
           })
           .catch((error) => {
             console.error('[Service Worker] Fetch falló:', error);
-            
+
             // Si el fetch falla (offline), devolver página de offline si existe
             return caches.match('/offline.html')
               .then((offlinePage) => {
@@ -108,7 +108,7 @@ self.addEventListener('fetch', (event) => {
 // Background Sync (para sincronizar datos cuando vuelva la conexión)
 self.addEventListener('sync', (event) => {
   console.log('[Service Worker] Background sync:', event.tag);
-  
+
   if (event.tag === 'sync-workouts') {
     event.waitUntil(
       // Aquí iría la lógica de sincronización cuando implementes Supabase
@@ -123,7 +123,7 @@ self.addEventListener('sync', (event) => {
 // Push Notifications (para recordatorios de entreno)
 self.addEventListener('push', (event) => {
   console.log('[Service Worker] Push recibido');
-  
+
   const options = {
     body: event.data ? event.data.text() : '¡Hora de entrenar! 💪',
     icon: '/icons/icon-192.png',
@@ -144,7 +144,7 @@ self.addEventListener('push', (event) => {
       }
     ]
   };
-  
+
   event.waitUntil(
     self.registration.showNotification('GymFlow', options)
   );
@@ -153,9 +153,9 @@ self.addEventListener('push', (event) => {
 // Notification Click Handler
 self.addEventListener('notificationclick', (event) => {
   console.log('[Service Worker] Notificación clickeada:', event.action);
-  
+
   event.notification.close();
-  
+
   if (event.action === 'start') {
     event.waitUntil(
       clients.openWindow('/')
