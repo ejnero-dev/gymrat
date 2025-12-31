@@ -1,11 +1,11 @@
 {
   "name": "GymFlow - Tu Entrenamiento Personal",
   "short_name": "GymFlow",
-  "description": "Tracking de entrenamientos de gimnasio con tu rutina de 5 días",
+  "description": "Tracking de entrenamientos de gimnasio - Calendario flexible",
   "start_url": "/gymrat/",
   "display": "standalone",
-  "background_color": "#6366f1",
-  "theme_color": "#6366f1",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
   "orientation": "portrait-primary",
   "scope": "/gymrat/",
   "icons": [
