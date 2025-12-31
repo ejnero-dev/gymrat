@@ -100,27 +100,33 @@
         .progress-ring {
             width: 56px;
             height: 56px;
-            border-radius: 50%;
-            border: 4px solid rgba(255, 255, 255, 0.3);
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
-            background: rgba(0, 0, 0, 0.2);
         }
 
-        .progress-ring::before {
-            content: '';
+        .progress-ring svg {
             position: absolute;
-            top: -4px;
-            left: -4px;
+            top: 0;
+            left: 0;
             width: 56px;
             height: 56px;
-            border-radius: 50%;
-            border: 4px solid var(--accent-gold);
-            border-bottom-color: transparent;
-            border-left-color: transparent;
-            transform: rotate(-45deg);
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring .ring-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.2);
+            stroke-width: 4;
+        }
+
+        .progress-ring .ring-progress {
+            fill: none;
+            stroke: var(--accent-gold);
+            stroke-width: 4;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.5s ease;
         }
 
         .goal-count {
@@ -1392,6 +1398,11 @@
         <header class="app-header">
             <div class="weekly-goal">
                 <div class="progress-ring">
+                    <svg viewBox="0 0 56 56">
+                        <circle class="ring-bg" cx="28" cy="28" r="24"></circle>
+                        <circle class="ring-progress" id="progressRing" cx="28" cy="28" r="24"
+                                stroke-dasharray="150.8" stroke-dashoffset="150.8"></circle>
+                    </svg>
                     <span class="goal-count" id="weeklyGoalCount">0/6</span>
                 </div>
                 <div class="goal-text">
@@ -1931,6 +1942,15 @@
             const days = getWeekDays();
             const completedCount = days.filter(d => d.hasWorkout).length;
             document.getElementById('weeklyGoalCount').textContent = `${completedCount}/${weeklyGoal}`;
+
+            // Update progress ring
+            const progressRing = document.getElementById('progressRing');
+            if (progressRing) {
+                const circumference = 150.8; // 2 * π * 24
+                const progress = Math.min(completedCount / weeklyGoal, 1);
+                const offset = circumference * (1 - progress);
+                progressRing.style.strokeDashoffset = offset;
+            }
         }
 
         function updateWeeklyGoal() {
