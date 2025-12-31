@@ -629,6 +629,41 @@
             background: var(--bg-card-hover);
         }
 
+        /* Weekly Goal Selector */
+        .goal-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .goal-option {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .goal-option:hover {
+            border-color: var(--accent-teal);
+            background: var(--bg-card-hover);
+        }
+
+        .goal-option.selected {
+            border-color: var(--accent-teal);
+            background: var(--accent-teal);
+            color: white;
+        }
+
         /* Day/Workout Details Modal Items */
         .workout-item {
             background: var(--bg-card);
@@ -1772,6 +1807,22 @@
         </div>
     </div>
 
+    <!-- Weekly Goal Modal -->
+    <div class="modal-overlay" id="weeklyGoalModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3>🎯 Meta Semanal</h3>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">¿Cuántos días quieres entrenar esta semana?</p>
+                <div class="goal-selector" id="goalSelector"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn cancel" onclick="closeWeeklyGoalModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ============================================
         // 1. DATA MODEL - ROUTINE
@@ -2164,7 +2215,31 @@
         }
 
         function editWeeklyGoal() {
-            showView('settings');
+            const container = document.getElementById('goalSelector');
+            container.innerHTML = [1, 2, 3, 4, 5, 6, 7].map(num => `
+                <button class="goal-option ${num === weeklyGoal ? 'selected' : ''}"
+                        onclick="selectWeeklyGoal(${num})">
+                    ${num}
+                </button>
+            `).join('');
+            document.getElementById('weeklyGoalModal').classList.add('active');
+        }
+
+        function selectWeeklyGoal(num) {
+            weeklyGoal = num;
+            localStorage.setItem('gymflow-weekly-goal', weeklyGoal);
+
+            // Update settings select if exists
+            const goalSelect = document.getElementById('weeklyGoalSelect');
+            if (goalSelect) goalSelect.value = weeklyGoal;
+
+            updateWeeklyGoalDisplay();
+            renderWeekCalendar();
+            closeWeeklyGoalModal();
+        }
+
+        function closeWeeklyGoalModal() {
+            document.getElementById('weeklyGoalModal').classList.remove('active');
         }
 
         function updateBestStreak() {

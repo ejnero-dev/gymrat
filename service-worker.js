@@ -1,7 +1,7 @@
 // GymFlow Service Worker
-// Version: 3.2.0 - Day workout details + no empty workouts
+// Version: 3.3.0 - Weekly goal modal
 
-const CACHE_NAME = 'gymflow-v11';
+const CACHE_NAME = 'gymflow-v12';
 const urlsToCache = [
   '/gymrat/',
   '/gymrat/index.html',
