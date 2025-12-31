@@ -2248,37 +2248,93 @@
         }
 
         function calculateBestStreak() {
-            // Calculate longest streak of consecutive weeks with at least weeklyGoal workouts
-            const sortedDates = Object.keys(workoutData).sort();
-            if (sortedDates.length === 0) return 0;
+            // Calculate longest streak of consecutive weeks meeting the weekly goal
+            const weeklyWorkouts = getWorkoutsByWeek();
+            const sortedWeeks = Object.keys(weeklyWorkouts).sort();
+
+            if (sortedWeeks.length === 0) return 0;
 
             let bestStreak = 0;
             let currentStreak = 0;
-            let lastWeek = null;
+            let lastWeekKey = null;
 
-            sortedDates.forEach(dateKey => {
-                const date = new Date(dateKey);
-                const weekNum = getWeekNumber(date);
+            sortedWeeks.forEach(weekKey => {
+                const workoutCount = weeklyWorkouts[weekKey];
+                const meetsGoal = workoutCount >= weeklyGoal;
 
-                if (lastWeek === null || weekNum === lastWeek + 1) {
+                if (!meetsGoal) {
+                    currentStreak = 0;
+                    lastWeekKey = weekKey;
+                    return;
+                }
+
+                // Check if this week is consecutive to the last
+                if (lastWeekKey === null) {
+                    currentStreak = 1;
+                } else if (isConsecutiveWeek(lastWeekKey, weekKey)) {
                     currentStreak++;
-                } else if (weekNum !== lastWeek) {
+                } else {
                     currentStreak = 1;
                 }
 
                 bestStreak = Math.max(bestStreak, currentStreak);
-                lastWeek = weekNum;
+                lastWeekKey = weekKey;
             });
 
             return bestStreak;
         }
 
-        function getWeekNumber(date) {
+        function getWorkoutsByWeek() {
+            // Group workouts by week (returns { "2025-W01": count, ... })
+            const weeklyWorkouts = {};
+
+            Object.keys(workoutData).forEach(dateKey => {
+                const dayData = workoutData[dateKey];
+                if (!dayData.workouts) return;
+
+                const hasValidWorkout = dayData.workouts.some(w =>
+                    w.exercises && Object.keys(w.exercises).length > 0
+                );
+
+                if (hasValidWorkout) {
+                    const weekKey = getWeekKey(new Date(dateKey));
+                    weeklyWorkouts[weekKey] = (weeklyWorkouts[weekKey] || 0) + 1;
+                }
+            });
+
+            return weeklyWorkouts;
+        }
+
+        function getWeekKey(date) {
+            // Returns "YYYY-WNN" format
             const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
             const dayNum = d.getUTCDay() || 7;
             d.setUTCDate(d.getUTCDate() + 4 - dayNum);
             const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+            const weekNum = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+            return `${d.getUTCFullYear()}-W${String(weekNum).padStart(2, '0')}`;
+        }
+
+        function isConsecutiveWeek(weekKey1, weekKey2) {
+            // Check if weekKey2 is exactly one week after weekKey1
+            const [year1, week1] = weekKey1.split('-W').map(Number);
+            const [year2, week2] = weekKey2.split('-W').map(Number);
+
+            if (year1 === year2) {
+                return week2 === week1 + 1;
+            } else if (year2 === year1 + 1) {
+                // Handle year transition (last week of year to first week)
+                const weeksInYear1 = getWeeksInYear(year1);
+                return week1 === weeksInYear1 && week2 === 1;
+            }
+            return false;
+        }
+
+        function getWeeksInYear(year) {
+            // Most years have 52 weeks, some have 53
+            const dec31 = new Date(year, 11, 31);
+            const weekKey = getWeekKey(dec31);
+            return parseInt(weekKey.split('-W')[1]);
         }
 
         // ============================================

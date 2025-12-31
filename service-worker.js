@@ -1,7 +1,7 @@
 // GymFlow Service Worker
-// Version: 3.3.0 - Weekly goal modal
+// Version: 3.4.0 - Real streak calculation
 
-const CACHE_NAME = 'gymflow-v12';
+const CACHE_NAME = 'gymflow-v13';
 const urlsToCache = [
   '/gymrat/',
   '/gymrat/index.html',
