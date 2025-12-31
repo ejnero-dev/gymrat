@@ -629,6 +629,114 @@
             background: var(--bg-card-hover);
         }
 
+        /* Day/Workout Details Modal Items */
+        .workout-item {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .workout-item:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .workout-item-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .workout-item-icon {
+            font-size: 24px;
+        }
+
+        .workout-item-info {
+            flex: 1;
+        }
+
+        .workout-item-title {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--text-primary);
+        }
+
+        .workout-item-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .workout-item-stats {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .workout-stat {
+            text-align: center;
+        }
+
+        .workout-stat-value {
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--accent-teal);
+        }
+
+        .workout-stat-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .exercise-detail-item {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .exercise-detail-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .exercise-sets-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .set-badge {
+            background: var(--bg-card);
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .set-badge strong {
+            color: var(--accent-coral);
+        }
+
+        .no-workouts-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .no-workouts-message .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
         /* ============================================
            WORKOUT VIEW (During Exercise)
         ============================================ */
@@ -1638,6 +1746,32 @@
         </div>
     </div>
 
+    <!-- Day Workouts Modal -->
+    <div class="modal-overlay" id="dayWorkoutsModal">
+        <div class="modal-container" style="max-height: 85vh;">
+            <div class="modal-header">
+                <h3 id="dayWorkoutsTitle">📅 Entrenamientos del día</h3>
+            </div>
+            <div class="modal-body" id="dayWorkoutsBody" style="overflow-y: auto; max-height: 60vh;"></div>
+            <div class="modal-footer">
+                <button class="modal-btn cancel" onclick="closeDayWorkoutsModal()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workout Details Modal -->
+    <div class="modal-overlay" id="workoutDetailsModal">
+        <div class="modal-container" style="max-height: 85vh;">
+            <div class="modal-header">
+                <h3 id="workoutDetailsTitle">💪 Detalles del entrenamiento</h3>
+            </div>
+            <div class="modal-body" id="workoutDetailsBody" style="overflow-y: auto; max-height: 60vh;"></div>
+            <div class="modal-footer">
+                <button class="modal-btn cancel" onclick="closeWorkoutDetailsModal()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ============================================
         // 1. DATA MODEL - ROUTINE
@@ -1727,6 +1861,7 @@
         let exerciseNotes = {};
         let weeklyGoal = 6;
         let currentView = 'home';
+        let pendingWorkout = null; // Workout in progress, not yet saved
 
         // ============================================
         // 3. DATA PERSISTENCE
@@ -1930,8 +2065,75 @@
         }
 
         function showDayWorkouts(dateKey) {
-            // TODO: Show workouts for specific day
-            console.log('Show workouts for:', dateKey);
+            const dayData = workoutData[dateKey];
+            const date = new Date(dateKey);
+            const options = { weekday: 'long', day: 'numeric', month: 'long' };
+            const formattedDate = date.toLocaleDateString('es-ES', options);
+
+            document.getElementById('dayWorkoutsTitle').textContent = `📅 ${formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1)}`;
+
+            const body = document.getElementById('dayWorkoutsBody');
+
+            if (!dayData || !dayData.workouts || dayData.workouts.length === 0) {
+                body.innerHTML = `
+                    <div class="no-workouts-message">
+                        <div class="icon">🏋️</div>
+                        <p>No hay entrenamientos registrados este día</p>
+                    </div>
+                `;
+            } else {
+                body.innerHTML = dayData.workouts.map(workout => {
+                    const routine = ROUTINE[workout.routineType];
+                    const exerciseCount = Object.keys(workout.exercises || {}).length;
+                    const stats = calculateWorkoutStats(workout);
+
+                    return `
+                        <div class="workout-item" onclick="viewWorkoutDetails('${dateKey}', '${workout.id}')">
+                            <div class="workout-item-header">
+                                <div class="workout-item-icon">${routine?.icon || '💪'}</div>
+                                <div class="workout-item-info">
+                                    <div class="workout-item-title">${routine?.name || 'Entrenamiento'}</div>
+                                    <div class="workout-item-subtitle">${exerciseCount} ejercicio${exerciseCount !== 1 ? 's' : ''}</div>
+                                </div>
+                            </div>
+                            <div class="workout-item-stats">
+                                <div class="workout-stat">
+                                    <div class="workout-stat-value">${stats.totalSets}</div>
+                                    <div class="workout-stat-label">Series</div>
+                                </div>
+                                <div class="workout-stat">
+                                    <div class="workout-stat-value">${stats.totalVolume.toLocaleString()}</div>
+                                    <div class="workout-stat-label">Volumen (kg)</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            document.getElementById('dayWorkoutsModal').classList.add('active');
+        }
+
+        function closeDayWorkoutsModal() {
+            document.getElementById('dayWorkoutsModal').classList.remove('active');
+        }
+
+        function calculateWorkoutStats(workout) {
+            let totalSets = 0;
+            let totalVolume = 0;
+
+            if (workout.exercises) {
+                Object.values(workout.exercises).forEach(exercise => {
+                    if (exercise.sets) {
+                        totalSets += exercise.sets.length;
+                        exercise.sets.forEach(set => {
+                            totalVolume += (set.weight || 0) * (set.reps || 0);
+                        });
+                    }
+                });
+            }
+
+            return { totalSets, totalVolume };
         }
 
         // ============================================
@@ -2078,8 +2280,77 @@
         }
 
         function viewWorkoutDetails(date, workoutId) {
-            // TODO: Implement workout details view
-            console.log('View workout:', date, workoutId);
+            const dayData = workoutData[date];
+            if (!dayData || !dayData.workouts) return;
+
+            const workout = dayData.workouts.find(w => w.id === workoutId);
+            if (!workout) return;
+
+            const routine = ROUTINE[workout.routineType];
+            const dateObj = new Date(date);
+            const options = { weekday: 'short', day: 'numeric', month: 'short' };
+            const formattedDate = dateObj.toLocaleDateString('es-ES', options);
+
+            document.getElementById('workoutDetailsTitle').textContent =
+                `${routine?.icon || '💪'} ${routine?.name || 'Entrenamiento'}`;
+
+            const body = document.getElementById('workoutDetailsBody');
+
+            if (!workout.exercises || Object.keys(workout.exercises).length === 0) {
+                body.innerHTML = `
+                    <div class="no-workouts-message">
+                        <div class="icon">📝</div>
+                        <p>No hay ejercicios registrados</p>
+                    </div>
+                `;
+            } else {
+                const stats = calculateWorkoutStats(workout);
+
+                let html = `
+                    <div style="text-align: center; margin-bottom: 16px; color: var(--text-secondary);">
+                        ${formattedDate}
+                    </div>
+                    <div class="workout-item-stats" style="margin-bottom: 20px; justify-content: center;">
+                        <div class="workout-stat">
+                            <div class="workout-stat-value">${stats.totalSets}</div>
+                            <div class="workout-stat-label">Series</div>
+                        </div>
+                        <div class="workout-stat">
+                            <div class="workout-stat-value">${stats.totalVolume.toLocaleString()}</div>
+                            <div class="workout-stat-label">Volumen (kg)</div>
+                        </div>
+                    </div>
+                `;
+
+                Object.entries(workout.exercises).forEach(([exerciseId, exerciseData]) => {
+                    const exerciseInfo = routine?.exercises.find(e => e.id === exerciseId);
+                    const exerciseName = exerciseInfo?.name || exerciseId;
+
+                    html += `
+                        <div class="exercise-detail-item">
+                            <div class="exercise-detail-name">${exerciseName}</div>
+                            <div class="exercise-sets-list">
+                                ${exerciseData.sets?.map((set, index) => `
+                                    <div class="set-badge">
+                                        S${index + 1}: <strong>${set.weight}kg</strong> × ${set.reps}
+                                    </div>
+                                `).join('') || '<span style="color: var(--text-secondary);">Sin series</span>'}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                body.innerHTML = html;
+            }
+
+            // Close day workouts modal if open
+            closeDayWorkoutsModal();
+
+            document.getElementById('workoutDetailsModal').classList.add('active');
+        }
+
+        function closeWorkoutDetailsModal() {
+            document.getElementById('workoutDetailsModal').classList.remove('active');
         }
 
         // ============================================
@@ -2186,31 +2457,33 @@
             currentDay = dayKey;
             workoutStartTime = Date.now();
 
-            // Initialize today's workout data if needed
-            const todayKey = getTodayKey();
-            if (!workoutData[todayKey]) {
-                workoutData[todayKey] = { workouts: [] };
-            }
-
-            // Create new workout entry
-            const workoutId = 'w' + Date.now();
-            workoutData[todayKey].workouts.push({
-                id: workoutId,
+            // Create pending workout (not saved until first set is completed)
+            pendingWorkout = {
+                id: 'w' + Date.now(),
                 routineType: dayKey,
                 startTime: new Date().toISOString(),
                 exercises: {}
-            });
-            autoSave();
+            };
 
             loadWorkoutView();
             showView('workout');
         }
 
-        function loadWorkoutView() {
-            const dayData = ROUTINE[currentDay];
+        function getCurrentWorkout() {
+            // Return pending workout if exists
+            if (pendingWorkout) {
+                return pendingWorkout;
+            }
+            // Otherwise get the last saved workout for today
             const todayKey = getTodayKey();
             const todayWorkouts = workoutData[todayKey]?.workouts || [];
-            const currentWorkout = todayWorkouts[todayWorkouts.length - 1] || { exercises: {} };
+            return todayWorkouts[todayWorkouts.length - 1] || { exercises: {} };
+        }
+
+        function loadWorkoutView() {
+            const dayData = ROUTINE[currentDay];
+            // Use pendingWorkout if available, otherwise get from saved data
+            const currentWorkout = getCurrentWorkout();
 
             document.getElementById('workoutTitle').textContent = dayData.fullName;
 
@@ -2258,6 +2531,7 @@
                 currentDay = null;
                 currentExerciseId = null;
                 workoutStartTime = null;
+                pendingWorkout = null; // Discard unsaved workout
                 showView('home');
             }
         }
@@ -2272,9 +2546,7 @@
 
             const dayData = ROUTINE[currentDay];
             const exercise = dayData.exercises.find(ex => ex.id === exerciseId);
-            const todayKey = getTodayKey();
-            const todayWorkouts = workoutData[todayKey]?.workouts || [];
-            const currentWorkout = todayWorkouts[todayWorkouts.length - 1] || { exercises: {} };
+            const currentWorkout = getCurrentWorkout();
             const exerciseData = currentWorkout.exercises[exerciseId] || { sets: [] };
 
             currentSetNumber = (exerciseData.sets?.length || 0) + 1;
@@ -2428,7 +2700,16 @@
             const exercise = dayData.exercises.find(ex => ex.id === currentExerciseId);
             const todayKey = getTodayKey();
 
-            // Get current workout
+            // If there's a pending workout, save it to workoutData now
+            if (pendingWorkout) {
+                if (!workoutData[todayKey]) {
+                    workoutData[todayKey] = { workouts: [] };
+                }
+                workoutData[todayKey].workouts.push(pendingWorkout);
+                pendingWorkout = null;
+            }
+
+            // Get current workout from saved data
             const todayWorkouts = workoutData[todayKey]?.workouts || [];
             const currentWorkout = todayWorkouts[todayWorkouts.length - 1];
 
@@ -2470,6 +2751,12 @@
 
         function deleteLastSet() {
             if (!confirm('¿Seguro que quieres borrar la última serie?')) return;
+
+            // If workout hasn't been saved yet (no sets completed), nothing to delete
+            if (pendingWorkout) {
+                alert('⚠️ No hay series para borrar');
+                return;
+            }
 
             const todayKey = getTodayKey();
             const todayWorkouts = workoutData[todayKey]?.workouts || [];
@@ -2604,9 +2891,7 @@
             const exercise = dayData.exercises.find(ex => ex.id === currentExerciseId);
             if (!exercise) return;
 
-            const todayKey = getTodayKey();
-            const todayWorkouts = workoutData[todayKey]?.workouts || [];
-            const currentWorkout = todayWorkouts[todayWorkouts.length - 1];
+            const currentWorkout = getCurrentWorkout();
             const exerciseData = currentWorkout?.exercises[currentExerciseId] || { sets: [] };
             const customRestTimes = exerciseData.customRestTimes || [];
             const defaultRest = exercise.rest;
@@ -2638,6 +2923,16 @@
             if (!exercise) return;
 
             const todayKey = getTodayKey();
+
+            // If there's a pending workout, save it first
+            if (pendingWorkout) {
+                if (!workoutData[todayKey]) {
+                    workoutData[todayKey] = { workouts: [] };
+                }
+                workoutData[todayKey].workouts.push(pendingWorkout);
+                pendingWorkout = null;
+            }
+
             const todayWorkouts = workoutData[todayKey]?.workouts || [];
             const currentWorkout = todayWorkouts[todayWorkouts.length - 1];
 

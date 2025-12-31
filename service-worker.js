@@ -1,7 +1,7 @@
 // GymFlow Service Worker
-// Version: 3.0.0 - UI Redesign
+// Version: 3.2.0 - Day workout details + no empty workouts
 
-const CACHE_NAME = 'gymflow-v9';
+const CACHE_NAME = 'gymflow-v11';
 const urlsToCache = [
   '/gymrat/',
   '/gymrat/index.html',
