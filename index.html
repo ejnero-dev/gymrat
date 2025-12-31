@@ -772,6 +772,98 @@
             margin-bottom: 16px;
         }
 
+        /* Progress Charts */
+        .progress-selector {
+            margin-bottom: 20px;
+        }
+
+        .progress-selector select {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .chart-container {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .chart-header h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .chart-stats {
+            display: flex;
+            gap: 16px;
+        }
+
+        .chart-stat {
+            text-align: right;
+        }
+
+        .chart-stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent-teal);
+        }
+
+        .chart-stat-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .chart-wrapper {
+            width: 100%;
+            aspect-ratio: 16/9;
+        }
+
+        .chart-wrapper svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .chart-legend-item {
+            font-size: 11px;
+            color: var(--text-secondary);
+            background: var(--bg-secondary);
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
         /* ============================================
            WORKOUT VIEW (During Exercise)
         ============================================ */
@@ -1697,8 +1789,30 @@
 
             <!-- PROGRESS VIEW -->
             <section id="progressView" class="hidden">
-                <h2 class="workout-title">Historial</h2>
-                <p class="workout-subtitle">Tu progreso de entrenamiento</p>
+                <h2 class="workout-title">Progreso</h2>
+                <p class="workout-subtitle">Analiza tu evolución</p>
+
+                <!-- Exercise Selector -->
+                <div class="progress-selector">
+                    <select id="exerciseSelect" onchange="renderExerciseChart()">
+                        <option value="">Selecciona un ejercicio</option>
+                    </select>
+                </div>
+
+                <!-- Chart Container -->
+                <div id="chartContainer" class="chart-container hidden">
+                    <div class="chart-header">
+                        <h3 id="chartTitle">Peso Máximo</h3>
+                        <div class="chart-stats" id="chartStats"></div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <svg id="progressChart" viewBox="0 0 320 180"></svg>
+                    </div>
+                    <div class="chart-legend" id="chartLegend"></div>
+                </div>
+
+                <!-- History List -->
+                <h3 class="section-title" style="margin-top: 24px;">Historial</h3>
                 <div id="progressContent"></div>
             </section>
 
@@ -3137,10 +3251,206 @@
         }
 
         // ============================================
-        // 16. PROGRESS VIEW
+        // 16. PROGRESS VIEW & CHARTS
         // ============================================
 
         function renderProgressView() {
+            populateExerciseSelector();
+            renderWorkoutHistory();
+        }
+
+        function populateExerciseSelector() {
+            const select = document.getElementById('exerciseSelect');
+            const exercisesWithData = getExercisesWithData();
+
+            let options = '<option value="">Selecciona un ejercicio</option>';
+            exercisesWithData.forEach(ex => {
+                options += `<option value="${ex.id}">${ex.name}</option>`;
+            });
+
+            select.innerHTML = options;
+            document.getElementById('chartContainer').classList.add('hidden');
+        }
+
+        function getExercisesWithData() {
+            const exerciseMap = new Map();
+
+            Object.values(workoutData).forEach(dayData => {
+                if (!dayData.workouts) return;
+                dayData.workouts.forEach(workout => {
+                    if (!workout.exercises) return;
+                    const routine = ROUTINE[workout.routineType];
+                    if (!routine) return;
+
+                    Object.keys(workout.exercises).forEach(exId => {
+                        const exData = workout.exercises[exId];
+                        if (exData.sets && exData.sets.length > 0) {
+                            if (!exerciseMap.has(exId)) {
+                                const exInfo = routine.exercises.find(e => e.id === exId);
+                                if (exInfo) {
+                                    exerciseMap.set(exId, { id: exId, name: exInfo.name });
+                                }
+                            }
+                        }
+                    });
+                });
+            });
+
+            return Array.from(exerciseMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+        }
+
+        function getExerciseHistory(exerciseId) {
+            const history = [];
+
+            Object.keys(workoutData).sort().forEach(dateKey => {
+                const dayData = workoutData[dateKey];
+                if (!dayData.workouts) return;
+
+                dayData.workouts.forEach(workout => {
+                    if (!workout.exercises || !workout.exercises[exerciseId]) return;
+                    const exData = workout.exercises[exerciseId];
+                    if (!exData.sets || exData.sets.length === 0) return;
+
+                    const maxWeight = Math.max(...exData.sets.map(s => s.weight));
+                    const totalVolume = exData.sets.reduce((sum, s) => sum + (s.weight * s.reps), 0);
+
+                    history.push({
+                        date: dateKey,
+                        maxWeight,
+                        totalVolume,
+                        sets: exData.sets.length
+                    });
+                });
+            });
+
+            return history;
+        }
+
+        function renderExerciseChart() {
+            const select = document.getElementById('exerciseSelect');
+            const exerciseId = select.value;
+            const container = document.getElementById('chartContainer');
+
+            if (!exerciseId) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            const history = getExerciseHistory(exerciseId);
+
+            if (history.length < 2) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+
+            // Calculate stats
+            const weights = history.map(h => h.maxWeight);
+            const maxWeight = Math.max(...weights);
+            const minWeight = Math.min(...weights);
+            const latestWeight = weights[weights.length - 1];
+            const firstWeight = weights[0];
+            const improvement = latestWeight - firstWeight;
+
+            // Update stats
+            document.getElementById('chartStats').innerHTML = `
+                <div class="chart-stat">
+                    <div class="chart-stat-value">${latestWeight}kg</div>
+                    <div class="chart-stat-label">Actual</div>
+                </div>
+                <div class="chart-stat">
+                    <div class="chart-stat-value" style="color: ${improvement >= 0 ? 'var(--accent-teal)' : 'var(--accent-coral)'}">
+                        ${improvement >= 0 ? '+' : ''}${improvement}kg
+                    </div>
+                    <div class="chart-stat-label">Progreso</div>
+                </div>
+            `;
+
+            // Render SVG chart
+            renderSVGChart(history, maxWeight, minWeight);
+
+            // Update legend
+            const firstDate = new Date(history[0].date);
+            const lastDate = new Date(history[history.length - 1].date);
+            document.getElementById('chartLegend').innerHTML = `
+                <span class="chart-legend-item">${history.length} sesiones</span>
+                <span class="chart-legend-item">${formatShortDate(firstDate)} - ${formatShortDate(lastDate)}</span>
+            `;
+        }
+
+        function renderSVGChart(history, maxWeight, minWeight) {
+            const svg = document.getElementById('progressChart');
+            const width = 320;
+            const height = 180;
+            const padding = { top: 20, right: 20, bottom: 30, left: 40 };
+            const chartWidth = width - padding.left - padding.right;
+            const chartHeight = height - padding.top - padding.bottom;
+
+            // Add some padding to the range
+            const range = maxWeight - minWeight || 1;
+            const yMin = Math.max(0, minWeight - range * 0.1);
+            const yMax = maxWeight + range * 0.1;
+
+            // Calculate points
+            const points = history.map((h, i) => {
+                const x = padding.left + (i / (history.length - 1)) * chartWidth;
+                const y = padding.top + chartHeight - ((h.maxWeight - yMin) / (yMax - yMin)) * chartHeight;
+                return { x, y, data: h };
+            });
+
+            // Build SVG
+            let svgContent = `
+                <defs>
+                    <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:var(--accent-teal);stop-opacity:0.3" />
+                        <stop offset="100%" style="stop-color:var(--accent-teal);stop-opacity:0" />
+                    </linearGradient>
+                </defs>
+            `;
+
+            // Y-axis labels
+            const ySteps = 4;
+            for (let i = 0; i <= ySteps; i++) {
+                const y = padding.top + (i / ySteps) * chartHeight;
+                const value = Math.round(yMax - (i / ySteps) * (yMax - yMin));
+                svgContent += `
+                    <text x="${padding.left - 8}" y="${y + 4}"
+                          text-anchor="end" fill="var(--text-secondary)" font-size="10">${value}</text>
+                    <line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}"
+                          stroke="var(--border-color)" stroke-width="1" stroke-dasharray="3,3"/>
+                `;
+            }
+
+            // Area fill
+            const areaPath = `M ${points[0].x} ${padding.top + chartHeight} ` +
+                points.map(p => `L ${p.x} ${p.y}`).join(' ') +
+                ` L ${points[points.length - 1].x} ${padding.top + chartHeight} Z`;
+            svgContent += `<path d="${areaPath}" fill="url(#chartGradient)"/>`;
+
+            // Line
+            const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+            svgContent += `<path d="${linePath}" fill="none" stroke="var(--accent-teal)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+            // Points
+            points.forEach((p, i) => {
+                const isLast = i === points.length - 1;
+                svgContent += `
+                    <circle cx="${p.x}" cy="${p.y}" r="${isLast ? 5 : 3}"
+                            fill="${isLast ? 'var(--accent-coral)' : 'var(--accent-teal)'}"
+                            stroke="var(--bg-card)" stroke-width="2"/>
+                `;
+            });
+
+            svg.innerHTML = svgContent;
+        }
+
+        function formatShortDate(date) {
+            const options = { day: 'numeric', month: 'short' };
+            return date.toLocaleDateString('es-ES', options);
+        }
+
+        function renderWorkoutHistory() {
             const container = document.getElementById('progressContent');
             const sortedDates = Object.keys(workoutData).sort().reverse();
 
@@ -3169,7 +3479,8 @@
                             });
 
                             html += `
-                                <div class="workout-card" style="flex: none; width: 100%; margin-bottom: 12px;">
+                                <div class="workout-card" style="flex: none; width: 100%; margin-bottom: 12px;"
+                                     onclick="viewWorkoutDetails('${date}', '${workout.id}')">
                                     <div style="display: flex; justify-content: space-between; align-items: center;">
                                         <div>
                                             <div class="workout-icon" style="display: inline; margin-right: 8px;">${routine?.icon || '💪'}</div>

@@ -1,7 +1,7 @@
 // GymFlow Service Worker
-// Version: 3.4.0 - Real streak calculation
+// Version: 3.5.0 - Progress charts
 
-const CACHE_NAME = 'gymflow-v13';
+const CACHE_NAME = 'gymflow-v14';
 const urlsToCache = [
   '/gymrat/',
   '/gymrat/index.html',
