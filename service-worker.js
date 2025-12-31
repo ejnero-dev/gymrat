@@ -1,7 +1,7 @@
 // GymFlow Service Worker
-// Version: 3.5.0 - Progress charts
+// Version: 3.6.0 - Fixes and month details
 
-const CACHE_NAME = 'gymflow-v14';
+const CACHE_NAME = 'gymflow-v15';
 const urlsToCache = [
   '/gymrat/',
   '/gymrat/index.html',

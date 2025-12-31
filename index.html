@@ -2167,6 +2167,10 @@
                 updateWeeklyGoalDisplay();
             } else if (viewName === 'progress') {
                 renderProgressView();
+            } else if (viewName === 'settings') {
+                // Sync weekly goal select
+                const goalSelect = document.getElementById('weeklyGoalSelect');
+                if (goalSelect) goalSelect.value = weeklyGoal;
             }
         }
 
@@ -2612,7 +2616,9 @@
                 const isCurrent = month.isCurrent;
 
                 return `
-                    <div class="month-card ${isCurrent ? 'current' : ''}">
+                    <div class="month-card ${isCurrent ? 'current' : ''}"
+                         onclick="showMonthWorkouts(${month.year}, ${month.month})"
+                         style="cursor: pointer;">
                         <div class="month-icon">${month.icon}</div>
                         <div class="month-name">${month.name}</div>
                         <div class="progress-bar">
@@ -2627,6 +2633,78 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        function showMonthWorkouts(year, month) {
+            const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                              'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+            const workouts = getMonthWorkouts(year, month);
+
+            document.getElementById('dayWorkoutsTitle').textContent = `📅 ${monthNames[month]} ${year}`;
+
+            const body = document.getElementById('dayWorkoutsBody');
+
+            if (workouts.length === 0) {
+                body.innerHTML = `
+                    <div class="no-workouts-message">
+                        <div class="icon">🏋️</div>
+                        <p>No hay entrenamientos este mes</p>
+                    </div>
+                `;
+            } else {
+                body.innerHTML = workouts.map(workout => {
+                    const routine = ROUTINE[workout.routineType];
+                    const exerciseCount = Object.keys(workout.exercises || {}).length;
+                    const stats = calculateWorkoutStats(workout);
+                    const dateObj = new Date(workout.date);
+                    const dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' });
+
+                    return `
+                        <div class="workout-item" onclick="viewWorkoutDetails('${workout.date}', '${workout.id}')">
+                            <div class="workout-item-header">
+                                <div class="workout-item-icon">${routine?.icon || '💪'}</div>
+                                <div class="workout-item-info">
+                                    <div class="workout-item-title">${routine?.name || 'Entrenamiento'}</div>
+                                    <div class="workout-item-subtitle">${dayName} • ${exerciseCount} ejercicio${exerciseCount !== 1 ? 's' : ''}</div>
+                                </div>
+                            </div>
+                            <div class="workout-item-stats">
+                                <div class="workout-stat">
+                                    <div class="workout-stat-value">${stats.totalSets}</div>
+                                    <div class="workout-stat-label">Series</div>
+                                </div>
+                                <div class="workout-stat">
+                                    <div class="workout-stat-value">${stats.totalVolume.toLocaleString()}</div>
+                                    <div class="workout-stat-label">Volumen</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            document.getElementById('dayWorkoutsModal').classList.add('active');
+        }
+
+        function getMonthWorkouts(year, month) {
+            const workouts = [];
+
+            Object.keys(workoutData).forEach(dateKey => {
+                const date = new Date(dateKey);
+                if (date.getFullYear() === year && date.getMonth() === month) {
+                    const dayData = workoutData[dateKey];
+                    if (dayData.workouts) {
+                        dayData.workouts.forEach(w => {
+                            if (w.exercises && Object.keys(w.exercises).length > 0) {
+                                workouts.push({ ...w, date: dateKey });
+                            }
+                        });
+                    }
+                }
+            });
+
+            return workouts.sort((a, b) => new Date(b.date) - new Date(a.date));
         }
 
         function getLastMonths(count) {
