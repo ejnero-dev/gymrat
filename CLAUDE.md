@@ -17,12 +17,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Single-Page Application Structure
 
-The entire app is contained in `index.html` (~1280 lines) with embedded CSS and vanilla JavaScript. This monolithic approach was chosen for simplicity and portability.
+The entire app is contained in `index.html` (~3600 lines) with embedded CSS and vanilla JavaScript. This monolithic approach was chosen for simplicity and portability.
 
 **Core components:**
-- **HTML structure** (lines 1-730): Layout, forms, and workout views
-- **CSS styling** (lines 19-625): Responsive design with mobile optimizations
-- **JavaScript app logic** (lines 734-1264): Data management, rendering, timers
+- **HTML structure** (lines 1-1850): Layout, modals, views, bottom navigation
+- **CSS styling** (lines 19-870): Dark theme, responsive design, charts
+- **JavaScript app logic** (lines 1900-3700): Data management, rendering, charts, timers
 
 ### Data Model
 
@@ -30,32 +30,37 @@ Data is stored in localStorage as a JSON object with this structure:
 
 ```javascript
 {
-  "2025-11-12": {  // Date key (YYYY-MM-DD)
-    day: "day1",   // Which routine day
-    date: "2025-11-12",
-    exercises: {
-      "e1": {      // Exercise ID
-        sets: [
-          {
-            weight: 20,
-            reps: 12,
-            timestamp: "2025-11-12T10:30:00.000Z"
-          },
-          // ... more sets
-        ]
-      },
-      // ... more exercises
-    }
-  },
-  // ... more workout dates
+  "2025-12-31": {  // Date key (YYYY-MM-DD)
+    workouts: [    // Array allows multiple workouts per day
+      {
+        id: "w1735600000000",  // Unique workout ID
+        routineType: "day1",   // Which routine (day1-day5)
+        startTime: "2025-12-31T10:00:00.000Z",
+        endTime: "2025-12-31T11:30:00.000Z",
+        exercises: {
+          "e1": {      // Exercise ID
+            sets: [
+              {
+                weight: 20,
+                reps: 12,
+                timestamp: "2025-12-31T10:30:00.000Z"
+              }
+            ],
+            customRestTimes: [60, 60, 90]  // Optional per-set rest times
+          }
+        }
+      }
+    ]
+  }
 }
 ```
 
 **Key features:**
 - Date-based storage allows historical tracking
-- Each workout tied to specific routine day
-- Timestamp on each set for tracking
+- Multiple workouts per day supported (workouts array)
+- Pending workout pattern: workouts only saved after first set completed
 - Exercise IDs map to ROUTINE object
+- Custom rest times per exercise
 
 ### Routine Structure (ROUTINE object)
 
@@ -161,6 +166,19 @@ Icons are already generated and in the repo.
 
 ## Key Features
 
+### UI Design
+- **Dark theme** with teal/coral/gold accent colors
+- **Bottom navigation** with 4 tabs: Home, Workout, Progress, Settings
+- **Mobile-first** responsive design
+
+### Home View
+- **Weekly calendar** with checkmarks for completed days (click to view details)
+- **Progress ring** showing weekly goal completion (SVG animated)
+- **Weekly goal modal** - tap to change goal (1-7 days)
+- **Best streak** - consecutive weeks meeting goal
+- **Recent workouts** - horizontal scrollable cards
+- **Monthly progress** - last 6 months with click to view details
+
 ### 5-Day Routine
 - Day 1: Pecho (Chest)
 - Day 2: Piernas (Legs)
@@ -168,60 +186,24 @@ Icons are already generated and in the repo.
 - Day 4: Bíceps y Hombro (Biceps & Shoulders)
 - Day 5: Bíceps y Tríceps (Biceps & Triceps)
 
-Each day has multiple exercises with sets, reps, and rest times.
+### Workout Flow
+- **Routine selector modal** - choose which day to train
+- **Exercise list** with progress indicators (⚪ pending, ▶️ active, ✅ completed)
+- **Exercise detail view** - weight/reps input, video links, tips
+- **Rest timer** - configurable per exercise, vibration + notification
+- **Workout summary** - volume, sets, duration stats
 
-### Day Selector (lines 880-903)
-- Grid of 5 buttons
-- Shows emoji for each day
-- Highlights current selected day
-- Switches workout view on click
+### Progress View
+- **Exercise selector** dropdown with all exercises that have data
+- **SVG line chart** showing max weight progression over time
+- **Stats display** - current weight and total improvement
+- **Workout history** list (clickable for details)
 
-### Workout List View (lines 909-958)
-- Shows all exercises for selected day
-- Progress indicator (completed/total sets)
-- Status icons: ⚪ pending, ▶️ active, ✅ completed
-- Shows last weight/reps if available
-- Finish workout button
-
-### Exercise Detail View (lines 964-1029)
-- Video link to YouTube for technique
-- Last workout reference
-- Current set input (weight/reps)
-- Complete set button
-- Rest timer inline
-- Completed sets history
-- Exercise tips
-
-### Auto-Save (lines 852-855)
-All changes auto-save to localStorage immediately. No manual save button needed.
-
-### Rest Timer (lines 1112-1165)
-- Starts automatically after completing a set
-- Configurable per exercise (default 90s)
-- Visual countdown with progress bar
-- Vibration on completion
-- Browser notification if permitted
-- Can be skipped
-
-### Workout Summary (lines 1176-1218)
-Shown after finishing workout:
-- Total volume (weight × reps summed)
-- Total sets completed
-- Workout duration
-- Back to home button
-
-### Responsive Design
-- Desktop: Rounded container, full-width layout
-- Mobile (<480px): Full-screen, smaller buttons (lines 600-624)
-- Touch-optimized: 56px min-height inputs
-- Font size 16px to prevent iOS zoom (line 321)
-
-### Last Workout Reference (lines 1229-1247)
-Function `getLastWorkoutForExercise()` searches historical data:
-- Excludes today's date
-- Finds most recent workout with that exercise
-- Shows average weight/reps
-- Displays days since last workout
+### Data Management
+- **Pending workout pattern** - workouts only saved after first set
+- **Auto-save** to localStorage on every change
+- **Export/Import** JSON backup in Settings
+- **Exercise notes** - personal notes per exercise
 
 ## Important Constraints
 
@@ -317,7 +299,7 @@ Checklist:
 **Data loss:**
 - LocalStorage can be cleared by user or browser
 - Educate users to avoid clearing browser data
-- Consider implementing export/import feature
+- Use Export/Import feature in Settings for backups
 - No automatic cloud sync (intentional for privacy)
 
 **Service Worker not working:**
@@ -342,23 +324,25 @@ Checklist:
 ## Future Improvements
 
 Potential features to add:
-- Export/Import workout data (JSON backup)
-- Progress charts (weight over time per exercise)
 - 1RM calculator
 - Routine templates (strength, hypertrophy, etc.)
-- Dark mode
 - Custom exercises
 - Rest day tracking
 - Body measurements tracking
 - Cloud sync (optional, with Supabase or similar)
 
+**Already implemented:**
+- ✅ Export/Import workout data (JSON backup)
+- ✅ Progress charts (weight over time per exercise)
+- ✅ Dark mode
+
 ## File Structure
 
 ```
 gymrat/
-├── index.html              # Main app (1280 lines)
-├── manifest.json           # PWA config (43 lines)
-├── service-worker.js       # Service Worker (167 lines)
+├── index.html              # Main app (~3600 lines)
+├── manifest.json           # PWA config
+├── service-worker.js       # Service Worker (cache-first)
 ├── icons/
 │   ├── icon-192.png       # PWA icon 192x192
 │   └── icon-512.png       # PWA icon 512x512
